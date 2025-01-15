@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/danielgtaylor/huma/v2 v2.27.0
 	github.com/gin-gonic/gin v1.10.0
-	gorm.io/gorm v1.25.10
+	gorm.io/gorm v1.25.12
 )
 
 require (
