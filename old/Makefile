@@ -1,6 +1,0 @@
-.PHONY: api
-api:
-	@go generate ./pkg/...
-
-t:
-	@go generate ./test/...
