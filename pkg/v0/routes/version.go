@@ -70,6 +70,15 @@ func DeleteVersion(input *models.Version) huma.Operation {
 		Method:        http.MethodDelete,
 		DefaultStatus: http.StatusOK,
 		Path:          v0.PathFor(DefaultVersionsPath) + "/{version_id}",
-		Tags:          []string{DefaultVersionsTag},
+		Parameters: []*huma.Param{
+			{
+				Name:        "version_id",
+				Description: "Version ID to delete.",
+				Example:     "v0.1.0",
+				In:          "path",
+				Required:    true,
+			},
+		},
+		Tags: []string{DefaultVersionsTag},
 	}
 }
