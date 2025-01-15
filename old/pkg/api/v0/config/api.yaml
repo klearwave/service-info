@@ -1,0 +1,176 @@
+openapi: 3.0.0
+info:
+  title: Info API
+  description: API for managing overall service information.
+  version: 0.0.0
+
+paths:
+  /api/v0/versions:
+    # create
+    post:
+      summary: Create a new version
+      description: Create a new version.
+      operationId: createVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/version'
+              required: [version_id, latest]
+      responses:
+        '201':
+          $ref: '#/components/responses/versionResponse'
+        '400':
+          $ref: '#/components/responses/errorBadRequest'
+        '500':
+          $ref: '#/components/responses/errorInternalServer'
+
+    # read
+    get:
+      summary: Retrieve all version information
+      description: Returns all version information.
+      operationId: readVersions
+      responses:
+        '200':
+          $ref: '#/components/responses/versionsResponse'
+        '500':
+          $ref: '#/components/responses/errorInternalServer'
+
+  /api/v0/versions/{version_id}:
+    # read
+    get:
+      summary: Retrieve specific version information
+      description: Returns details of a specific version.
+      operationId: readVersion
+      parameters:
+        - $ref: '#/components/parameters/versionId'
+      responses:
+        '200':
+          $ref: '#/components/responses/versionResponse'
+        '404':
+          $ref: '#/components/responses/errorNotFound'
+        '500':
+          $ref: '#/components/responses/errorInternalServer'
+
+    # delete
+    delete:
+      summary: Delete a version
+      description: Deletes a specific version by its ID.
+      operationId: deleteVersion
+      parameters:
+        - $ref: '#/components/parameters/versionId'
+      responses:
+        '200':
+          $ref: '#/components/responses/deleteResponse'
+        '404':
+          $ref: '#/components/responses/errorNotFound'
+        '500':
+          $ref: '#/components/responses/errorInternalServer'
+
+# components
+components:
+  # responses
+  responses:
+    # error responses
+    errorBadRequest:
+      description: Bad request response.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Bad request."
+    errorNotFound:
+      description: Not found response.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Not found."
+    errorInternalServer:
+      description: Internal server error response.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Internal server error."
+
+    # success responses
+    versionResponse:
+      description: Return the version object from the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/version'
+    versionsResponse:
+      description: Return multiple versions from the request.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              versions:
+                type: array
+                items:
+                  $ref: '#/components/schemas/version'
+    deleteResponse:
+      description: Response returned when deleting an object.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Object deleted successfully."
+
+  # schemas
+  schemas:
+    version:
+      type: object
+      properties:
+        version_id:
+          $ref: '#/components/schemas/versionId'
+        latest:
+          $ref: '#/components/schemas/latest'
+        id:
+          $ref: '#/components/schemas/id'
+        created_at:
+          $ref: '#/components/schemas/createdAt'
+
+    versionId:
+      type: string
+      example: "v0.1.0"
+      description: Version identifier in semantic versioning format.
+      pattern: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$'
+
+    latest:
+      type: boolean
+      description: Whether or not this version is the latest version.
+
+    id:
+      type: integer
+      description: Database ID of the stored object.  This is determined on the backend at creation time and is not modifiable.
+
+    createdAt:
+      type: string
+      description: Creation timestamp of the version.  This is determined on the backend at creation time and is not modifiable.
+      format: date-time
+
+  # parameters
+  parameters:
+    versionId:
+      name: version_id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/versionId'
