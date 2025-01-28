@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	// create the server and register the routes
+	// create the server
 	server, err := server.NewServer()
 	if err != nil {
 		panic(err)

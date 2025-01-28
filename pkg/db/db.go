@@ -10,6 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	MissingDatabaseID int = 0
+)
+
 var (
 	ErrMissingDatabaseHost     = errors.New("missing DB_HOST environment variable")
 	ErrMissingDatabaseName     = errors.New("missing DB_NAME environment variable")

@@ -1,7 +1,7 @@
 -- +goose Up
 CREATE TABLE versions (
     id SERIAL PRIMARY KEY,
-    version_id VARCHAR(16) NOT NULL UNIQUE,
+    version_id VARCHAR(32) NOT NULL UNIQUE,
     latest BOOLEAN DEFAULT FALSE,
     x_version INT GENERATED ALWAYS AS (CAST(SPLIT_PART(SUBSTRING(version_id FROM 2), '.', 1) AS INT)) STORED,
     y_version INT GENERATED ALWAYS AS (CAST(SPLIT_PART(SUBSTRING(version_id FROM 2), '.', 2) AS INT)) STORED,

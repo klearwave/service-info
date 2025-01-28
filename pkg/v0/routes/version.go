@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+
 	v0 "github.com/klearwave/service-info/pkg/v0"
 	"github.com/klearwave/service-info/pkg/v0/models"
 )
 
 const (
-	DefaultVersionsPath = "versions"
-	DefaultVersionsTag  = "Versions"
+	DefaultVersionsPath     = "versions"
+	DefaultVersionsGroupTag = "Versions"
 )
 
 // CreateVersion defines the routing and subsequent specification for POST to /api/v0/versions.
@@ -22,7 +23,7 @@ func CreateVersion(input *models.Version) huma.Operation {
 		Method:        http.MethodPost,
 		DefaultStatus: http.StatusCreated,
 		Path:          v0.PathFor(DefaultVersionsPath),
-		Tags:          []string{DefaultVersionsTag},
+		Tags:          versionInfoTags(),
 	}
 }
 
@@ -39,12 +40,12 @@ func GetVersion(input *models.Version) huma.Operation {
 			{
 				Name:        "version_id",
 				Description: "Version ID to get.",
-				Example:     "v0.1.0",
+				Example:     "v0.1.2",
 				In:          "path",
 				Required:    true,
 			},
 		},
-		Tags: []string{DefaultVersionsTag},
+		Tags: versionInfoTags(),
 	}
 }
 
@@ -57,7 +58,29 @@ func GetVersions(input *models.Version) huma.Operation {
 		Method:        http.MethodGet,
 		DefaultStatus: http.StatusOK,
 		Path:          v0.PathFor(DefaultVersionsPath),
-		Tags:          []string{DefaultVersionsTag},
+		Tags:          versionInfoTags(),
+	}
+}
+
+// GetVersionContainerImages defines the routing and subsequent specification for GET to /api/v0/versions/{version_id}/container_images.
+func GetVersionContainerImages(input *models.Version) huma.Operation {
+	return huma.Operation{
+		OperationID:   "getVersionContainerImages",
+		Summary:       "Get container images for a specific version.",
+		Description:   "Get container images for a specific version.",
+		Method:        http.MethodGet,
+		DefaultStatus: http.StatusOK,
+		Path:          v0.PathFor(DefaultVersionsPath) + "/{version_id}/container_images",
+		Parameters: []*huma.Param{
+			{
+				Name:        "version_id",
+				Description: "Version ID to get container images for.",
+				Example:     "v0.1.2",
+				In:          "path",
+				Required:    true,
+			},
+		},
+		Tags: versionInfoTags(),
 	}
 }
 
@@ -74,11 +97,19 @@ func DeleteVersion(input *models.Version) huma.Operation {
 			{
 				Name:        "version_id",
 				Description: "Version ID to delete.",
-				Example:     "v0.1.0",
+				Example:     "v0.1.2",
 				In:          "path",
 				Required:    true,
 			},
 		},
-		Tags: []string{DefaultVersionsTag},
+		Tags: versionInfoTags(),
+	}
+}
+
+// versionGroupTags defines the group tags that group similar APIs in the documentation site.
+func versionInfoTags() []string {
+	return []string{
+		DefaultVersionsGroupTag,
+		v0.DefaultGroupTag,
 	}
 }
