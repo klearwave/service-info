@@ -20,10 +20,10 @@ func (service *Service) CreateContainerImage(ctx context.Context, request *model
 	defer service.Database.Lock.Unlock()
 
 	containerImage := &modelsv0.ContainerImage{}
-	containerImage.ContainerImageInput = request.Body
+	containerImage.FromRequest(&request.Body)
 
 	// create the container image
-	if err := service.Database.Create(containerImage.ContainerImageInput); err != nil {
+	if err := service.Database.Create(containerImage, "Image", "SHA256Sum", "CommitHash"); err != nil {
 		return nil, err
 	}
 

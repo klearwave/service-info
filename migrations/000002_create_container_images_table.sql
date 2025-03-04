@@ -11,8 +11,8 @@ CREATE TABLE container_images (
 
 CREATE TABLE version_container_images (
     id SERIAL PRIMARY KEY,
-    version_id INTEGER NOT NULL,
-    container_image_id INTEGER NOT NULL,
+    version_id INTEGER,
+    container_image_id INTEGER,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (version_id, container_image_id),
     FOREIGN KEY (version_id) REFERENCES versions (id) ON DELETE CASCADE,

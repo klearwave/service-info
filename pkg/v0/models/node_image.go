@@ -15,6 +15,11 @@ type NodeImageInput struct {
 	// Versions []string `json:"versions,omitempty" example:"v0.1.2" doc:"Container image tag."`
 }
 
+// TableName sets the database table name.
+func (input NodeImageInput) TableName() string {
+	return "node_images"
+}
+
 // NodeImage represents the full database schema for a NodeImage.
 type NodeImage struct {
 	models.Model

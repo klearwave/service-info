@@ -72,9 +72,30 @@ func NewDatabase() (*Database, error) {
 }
 
 // Create is a generic function to create a model
-// when no special logic is required.
-func (database *Database) Create(model interface{}) error {
-	result := database.Connection.Create(model)
+// when no special logic is required.  If fields is specified,
+// the the model will only be created with the select fields.
+func (database *Database) Create(model interface{}, fields ...string) error {
+	if len(fields) == 0 {
+		result := database.Connection.Create(model)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		return nil
+	}
+
+	result := database.Connection.Select(fields).Create(model)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+// CreateWithFields is a generic function to create
+// a model given only a set of specific fields.
+func (database *Database) CreateWithFields(model interface{}, fields ...string) error {
+	result := database.Connection.Select(fields).Create(model)
 	if result.Error != nil {
 		return result.Error
 	}

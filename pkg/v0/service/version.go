@@ -21,30 +21,30 @@ func (service *Service) CreateVersion(ctx context.Context, request *modelsv0.Ver
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
-	version := &modelsv0.Version{}
-	version.VersionInput = request.Body
-
-	if version.VersionId == "" {
+	if request.Body.VersionId == "" {
 		return nil, ErrMissingVersionId
 	}
 
 	// validate that we have a valid semantic version
-	if err := validateSemanticVersioning(version.VersionId); err != nil {
+	if err := validateSemanticVersioning(request.Body.VersionId); err != nil {
 		return nil, fmt.Errorf("%s; %w", ErrInvalidVersionId, err)
 	}
 
 	// add 'v' prefix if missing
-	if version.VersionId[0] != 'v' {
-		version.VersionId = "v" + version.VersionId
+	if request.Body.VersionId[0] != 'v' {
+		request.Body.VersionId = "v" + request.Body.VersionId
 	}
 
 	// create the version
-	if err := service.Database.Create(version.VersionInput); err != nil {
+	response := &modelsv0.Version{}
+	response.FromRequest(&request.Body)
+
+	if err := service.Database.Create(response, "VersionId", "Latest"); err != nil {
 		return nil, err
 	}
 
 	return &modelsv0.VersionResponse{
-		Body: *version,
+		Body: *response,
 	}, nil
 }
 
