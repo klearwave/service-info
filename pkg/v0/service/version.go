@@ -59,7 +59,7 @@ func (service *Service) GetVersions(ctx context.Context, request *modelsv0.Versi
 
 	versions := []modelsv0.Version{}
 
-	result := service.Database.Connection.Find(&versions)
+	result := service.Database.Connection.Preload("ContainerImages").Find(&versions)
 	if result.Error != nil {
 		return nil, result.Error
 	}
