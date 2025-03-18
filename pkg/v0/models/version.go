@@ -9,11 +9,16 @@ import (
 
 	"github.com/klearwave/service-info/pkg/errors"
 	"github.com/klearwave/service-info/pkg/models"
+	"github.com/klearwave/service-info/pkg/utils/pointers"
+)
+
+const (
+	versionRegex = `^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$`
 )
 
 // VersionBase is the base set of fields for all Version objects.
 type VersionBase struct {
-	VersionId string `json:"version_id,omitempty" example:"v0.1.2" doc:"Version in semantic versioning format."`
+	VersionId *string `json:"version_id,omitempty" example:"v0.1.2" doc:"Version in semantic versioning format."`
 }
 
 // VersionRequestBody is the base set of inputs required to create a Version.
@@ -33,12 +38,12 @@ type Version struct {
 	models.Model
 	VersionBase
 
-	Stable bool `json:"stable,omitempty" example:"false" doc:"Whether this is a stable version."`
+	Stable *bool `json:"stable,omitempty" example:"false" doc:"Whether this is a stable version."`
 
-	XVersion     int    `json:"x_version,omitempty" example:"0" doc:"The X version of this release (e.g. 0; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
-	YVersion     int    `json:"y_version,omitempty" example:"1" doc:"The Y version of this release (e.g. 1; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
-	ZVersion     int    `json:"z_version,omitempty" example:"2" doc:"The Z version of this release (e.g. 2; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
-	BuildVersion string `json:"build_version,omitempty" example:"prerelease.1" doc:"The build version and metadata of this release (e.g. prerelease.1; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
+	XVersion     *int    `json:"x_version,omitempty" example:"0" doc:"The X version of this release (e.g. 0; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
+	YVersion     *int    `json:"y_version,omitempty" example:"1" doc:"The Y version of this release (e.g. 1; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
+	ZVersion     *int    `json:"z_version,omitempty" example:"2" doc:"The Z version of this release (e.g. 2; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
+	BuildVersion *string `json:"build_version,omitempty" example:"prerelease.1" doc:"The build version and metadata of this release (e.g. prerelease.1; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
 
 	ContainerImages []*ContainerImage `json:"container_images,omitempty" gorm:"many2many:version_container_images;" doc:"Container images associated with this version."`
 }
@@ -93,9 +98,8 @@ type VersionsResponse struct {
 // is used in conjunction with GORM as a trigger function that is called before
 // inserting a record into the database.
 func (version *Version) BeforeCreate(tx *gorm.DB) error {
-	// add 'v' prefix if missing
-	if version.VersionId[0] != 'v' {
-		version.VersionId = "v" + version.VersionId
+	if err := version.validate(); err != nil {
+		return fmt.Errorf("%s; %w", errors.ErrInvalidVersion, err)
 	}
 
 	// set the x, y and z versions for the version
@@ -106,19 +110,43 @@ func (version *Version) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
+// validate validates that a specific version is valid.
+func (version *Version) validate() error {
+	if version == nil {
+		return errors.ErrMissingVersionObject
+	}
+
+	if version.VersionId == nil {
+		return errors.ErrMissingVersionParameterId
+	}
+
+	re, err := regexp.Compile(versionRegex)
+	if err != nil {
+		return fmt.Errorf("invalid regex pattern [%s]: %w", versionRegex, err)
+	}
+
+	if !re.MatchString(*version.VersionId) {
+		return fmt.Errorf("input [%s] does not match the required pattern [%s]",
+			*version.VersionId,
+			versionRegex,
+		)
+	}
+
+	return nil
+}
+
 // setVersioning sets the major, minor, bugfix and build versions for a specific version.  It also
 // performs some basic mutations and validations againt the set version.
 func (version *Version) setVersioning() error {
-	versionId := version.VersionId
+	versionId := *version.VersionId
 
-	if versionId == "" {
-		return errors.ErrMissingVersionId
+	// add 'v' prefix if missing
+	if versionId[0] != 'v' {
+		version.VersionId = pointers.FromString("v" + versionId)
 	}
 
 	// regular expression for semantic versioning with optional 'v' prefix
-	semverRegex := regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+([0-9A-Za-z.-]+))?$`)
-
-	matches := semverRegex.FindStringSubmatch(versionId)
+	matches := regexp.MustCompile(versionRegex).FindStringSubmatch(versionId)
 	if matches == nil {
 		return fmt.Errorf("version not in semantic versioning format: %s", versionId)
 	}
@@ -136,17 +164,17 @@ func (version *Version) setVersioning() error {
 	}
 
 	// finally store the versions
-	version.XVersion = subVersions[0]
-	version.YVersion = subVersions[1]
-	version.ZVersion = subVersions[2]
+	version.XVersion = pointers.Int(subVersions[0])
+	version.YVersion = pointers.Int(subVersions[1])
+	version.ZVersion = pointers.Int(subVersions[2])
 
 	// set the optional build version
 	if matches[4] != "" {
-		version.BuildVersion = matches[4]
+		version.BuildVersion = pointers.FromString(matches[4])
 	} else {
 		// if this is not a build version, e.g. v1.2.3-alpha.1, then
 		// we can consider it to be a stable version
-		version.Stable = true
+		version.Stable = pointers.Bool(true)
 	}
 
 	return nil

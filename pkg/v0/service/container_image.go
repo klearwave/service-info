@@ -23,8 +23,9 @@ func (service *Service) CreateContainerImage(ctx context.Context, request *model
 	containerImage.FromRequest(&request.Body)
 
 	// create the container image
-	if err := service.Database.Create(containerImage, "Image", "SHA256Sum", "CommitHash"); err != nil {
-		return nil, err
+	result := service.Database.Connection.Create(containerImage)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return &modelsv0.ContainerImageResponse{

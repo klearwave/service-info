@@ -92,17 +92,6 @@ func (database *Database) Create(model interface{}, fields ...string) error {
 	return nil
 }
 
-// CreateWithFields is a generic function to create
-// a model given only a set of specific fields.
-func (database *Database) CreateWithFields(model interface{}, fields ...string) error {
-	result := database.Connection.Select(fields).Create(model)
-	if result.Error != nil {
-		return result.Error
-	}
-
-	return nil
-}
-
 // Read is a generic function to read a model
 // when no special logic is required.
 func (database *Database) Read(id int, model interface{}) error {

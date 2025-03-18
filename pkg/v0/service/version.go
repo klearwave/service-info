@@ -18,8 +18,9 @@ func (service *Service) CreateVersion(ctx context.Context, request *modelsv0.Ver
 	response := &modelsv0.Version{}
 	response.FromRequest(&request.Body)
 
-	if err := service.Database.Create(response); err != nil {
-		return nil, err
+	result := service.Database.Connection.Create(response)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return &modelsv0.VersionResponse{
@@ -35,14 +36,14 @@ func (service *Service) GetVersion(ctx context.Context, request *modelsv0.Versio
 	response := &modelsv0.VersionResponse{Body: modelsv0.Version{}}
 
 	if request.VersionID == "" {
-		return nil, errors.ErrMissingVersionId
+		return nil, errors.ErrMissingVersionParameterId
 	}
 
 	if _, err := service.Database.FindBy("version_id", request.VersionID, &response.Body); err != nil {
 		return nil, err
 	}
 
-	if response.Body.VersionId == "" {
+	if *response.Body.VersionId == "" {
 		response.Status = http.StatusNotFound
 
 		return response, nil
@@ -76,7 +77,7 @@ func (service *Service) DeleteVersion(ctx context.Context, request *modelsv0.Ver
 	version := modelsv0.Version{}
 
 	if request.VersionID == "" {
-		return nil, errors.ErrMissingVersionId
+		return nil, errors.ErrMissingVersionParameterId
 	}
 
 	if _, err := service.Database.FindBy("version_id", request.VersionID, &version); err != nil {

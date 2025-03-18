@@ -4,35 +4,41 @@ import (
 	"reflect"
 	"testing"
 
+	"gorm.io/gorm"
+
 	"github.com/klearwave/service-info/pkg/models"
+	"github.com/klearwave/service-info/pkg/utils/pointers"
 )
 
-func TestVersion_setVersions(t *testing.T) {
+func TestVersion_BeforeCreate(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
 		Model           models.Model
 		VersionBase     VersionBase
-		Stable          bool
-		XVersion        int
-		YVersion        int
-		ZVersion        int
-		BuildVersion    string
+		Stable          *bool
+		XVersion        *int
+		YVersion        *int
+		ZVersion        *int
+		BuildVersion    *string
 		ContainerImages []*ContainerImage
+	}
+
+	type args struct {
+		tx *gorm.DB
 	}
 
 	tests := []struct {
 		name    string
 		fields  fields
+		args    args
 		wantErr bool
 		want    *Version
 	}{
 		{
 			name: "fail: missing version id",
 			fields: fields{
-				VersionBase: VersionBase{
-					VersionId: "",
-				},
+				VersionBase: VersionBase{},
 			},
 			wantErr: true,
 		},
@@ -40,49 +46,65 @@ func TestVersion_setVersions(t *testing.T) {
 			name: "fail: invalid version id",
 			fields: fields{
 				VersionBase: VersionBase{
-					VersionId: "v1.2",
+					VersionId: pointers.FromString("v1.2"),
 				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "success: x/y/z versions are set",
+			name: "success: v is prepended",
 			fields: fields{
 				VersionBase: VersionBase{
-					VersionId: "v1.2.3",
+					VersionId: pointers.FromString("1.2.3"),
 				},
 			},
 			want: &Version{
 				VersionBase: VersionBase{
-					VersionId: "v1.2.3",
+					VersionId: pointers.FromString("v1.2.3"),
 				},
-				XVersion: 1,
-				YVersion: 2,
-				ZVersion: 3,
-				Stable:   true,
+				XVersion: pointers.Int(1),
+				YVersion: pointers.Int(2),
+				ZVersion: pointers.Int(3),
+				Stable:   pointers.Bool(true),
+			},
+		},
+		{
+			name: "success: x/y/z versions are set",
+			fields: fields{
+				VersionBase: VersionBase{
+					VersionId: pointers.FromString("v1.2.3"),
+				},
+			},
+			want: &Version{
+				VersionBase: VersionBase{
+					VersionId: pointers.FromString("v1.2.3"),
+				},
+				XVersion: pointers.Int(1),
+				YVersion: pointers.Int(2),
+				ZVersion: pointers.Int(3),
+				Stable:   pointers.Bool(true),
 			},
 		},
 		{
 			name: "success: build version is set",
 			fields: fields{
 				VersionBase: VersionBase{
-					VersionId: "v1.2.3-prerelease.1",
+					VersionId: pointers.FromString("v1.2.3-prerelease.1"),
 				},
 			},
 			want: &Version{
 				VersionBase: VersionBase{
-					VersionId: "v1.2.3-prerelease.1",
+					VersionId: pointers.FromString("v1.2.3-prerelease.1"),
 				},
-				XVersion:     1,
-				YVersion:     2,
-				ZVersion:     3,
-				BuildVersion: "prerelease.1",
+				XVersion:     pointers.Int(1),
+				YVersion:     pointers.Int(2),
+				ZVersion:     pointers.Int(3),
+				BuildVersion: pointers.FromString("prerelease.1"),
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			version := &Version{
@@ -95,11 +117,11 @@ func TestVersion_setVersions(t *testing.T) {
 				BuildVersion:    tt.fields.BuildVersion,
 				ContainerImages: tt.fields.ContainerImages,
 			}
-			if err := version.setVersioning(); (err != nil) != tt.wantErr {
-				t.Errorf("Version.setVersions() error = %v, wantErr %v", err, tt.wantErr)
+			if err := version.BeforeCreate(tt.args.tx); (err != nil) != tt.wantErr {
+				t.Errorf("Version.BeforeCreate() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if tt.want != nil && !reflect.DeepEqual(*tt.want, *version) {
-				t.Errorf("want %+v, got %+v", tt.want, version)
+			if tt.want != nil && !reflect.DeepEqual(version, tt.want) {
+				t.Errorf("Version got = %+v, want %+v", version, tt.want)
 			}
 		})
 	}
