@@ -2,9 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 
-	"github.com/klearwave/service-info/pkg/errors"
+	"github.com/danielgtaylor/huma/v2"
+	"gorm.io/gorm"
+
+	apierrors "github.com/klearwave/service-info/pkg/errors"
 	"github.com/klearwave/service-info/pkg/models"
 	modelsv0 "github.com/klearwave/service-info/pkg/v0/models"
 )
@@ -32,20 +37,37 @@ func (service *Service) GetVersion(ctx context.Context, request *modelsv0.Versio
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
-	response := &modelsv0.VersionResponse{Body: modelsv0.Version{}}
-
 	if request.VersionID == "" {
-		return nil, errors.ErrMissingVersionParameterId
+		return nil, apierrors.ErrMissingVersionParameterId
 	}
 
-	if _, err := service.Database.FindBy("version_id", request.VersionID, &response.Body); err != nil {
-		return nil, err
+	response := &modelsv0.VersionResponse{Body: modelsv0.Version{}}
+
+	result := service.Database.Connection.Where(map[string]interface{}{"version_id": request.VersionID}).
+		Preload("ContainerImages").
+		First(&response.Body)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			response.Status = http.StatusNotFound
+
+			return response, huma.Error404NotFound(
+				fmt.Sprintf("unable to find version with version_id: [%s]", request.VersionID),
+				result.Error,
+			)
+		}
+
+		response.Status = http.StatusInternalServerError
+
+		return response, result.Error
 	}
 
 	if *response.Body.VersionId == "" {
 		response.Status = http.StatusNotFound
 
-		return response, nil
+		return response, huma.Error404NotFound(
+			fmt.Sprintf("found version with missing version_id: [%s]", request.VersionID),
+			result.Error,
+		)
 	}
 
 	return response, nil
@@ -76,7 +98,7 @@ func (service *Service) DeleteVersion(ctx context.Context, request *modelsv0.Ver
 	version := modelsv0.Version{}
 
 	if request.VersionID == "" {
-		return nil, errors.ErrMissingVersionParameterId
+		return nil, apierrors.ErrMissingVersionParameterId
 	}
 
 	if _, err := service.Database.FindBy("version_id", request.VersionID, &version); err != nil {

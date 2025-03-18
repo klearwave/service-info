@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/klearwave/service-info/pkg/db"
 	"github.com/klearwave/service-info/pkg/models"
 	modelsv0 "github.com/klearwave/service-info/pkg/v0/models"
@@ -46,7 +48,7 @@ func (service *Service) GetContainerImage(ctx context.Context, request *modelsv0
 	if response.Body.Id == db.MissingDatabaseID {
 		response.Status = http.StatusNotFound
 
-		return response, nil
+		return response, huma.Error404NotFound(fmt.Sprintf("unable to find container image with id: [%d]", response.Body.Id))
 	}
 
 	return response, nil

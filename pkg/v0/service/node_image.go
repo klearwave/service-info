@@ -23,8 +23,9 @@ func (service *Service) CreateNodeImage(ctx context.Context, request *modelsv0.N
 	NodeImage.NodeImageInput = request.Body
 
 	// create the node image
-	if err := service.Database.Create(NodeImage); err != nil {
-		return nil, err
+	result := service.Database.Connection.Create(NodeImage)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return &modelsv0.NodeImageResponse{

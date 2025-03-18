@@ -71,27 +71,6 @@ func NewDatabase() (*Database, error) {
 	}, nil
 }
 
-// Create is a generic function to create a model
-// when no special logic is required.  If fields is specified,
-// the the model will only be created with the select fields.
-func (database *Database) Create(model interface{}, fields ...string) error {
-	if len(fields) == 0 {
-		result := database.Connection.Create(model)
-		if result.Error != nil {
-			return result.Error
-		}
-
-		return nil
-	}
-
-	result := database.Connection.Select(fields).Create(model)
-	if result.Error != nil {
-		return result.Error
-	}
-
-	return nil
-}
-
 // Read is a generic function to read a model
 // when no special logic is required.
 func (database *Database) Read(id int, model interface{}) error {
