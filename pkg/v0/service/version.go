@@ -15,8 +15,7 @@ func (service *Service) CreateVersion(ctx context.Context, request *modelsv0.Ver
 	defer service.Database.Lock.Unlock()
 
 	// create the version
-	response := &modelsv0.Version{}
-	response.FromRequest(&request.Body)
+	response := request.Body.ToResponse()
 
 	result := service.Database.Connection.Create(response)
 	if result.Error != nil {

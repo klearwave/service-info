@@ -29,8 +29,27 @@ type VersionRequestBody struct {
 }
 
 // TableName defines the table name for the request.
-func (body VersionRequestBody) TableName() string {
+func (request VersionRequestBody) TableName() string {
 	return "versions"
+}
+
+// ToResponse converts a request object to a response object.
+func (request *VersionRequestBody) ToResponse() *Version {
+	response := &Version{}
+
+	response.VersionBase = request.VersionBase
+
+	if len(request.ContainerImages) < 1 {
+		return response
+	}
+
+	response.ContainerImages = make([]*ContainerImage, len(request.ContainerImages))
+
+	for i := range request.ContainerImages {
+		response.ContainerImages[i] = request.ContainerImages[i].ToResponse()
+	}
+
+	return response
 }
 
 // Version represents the full database schema for a Version.  The full schema is also used in responses.
@@ -46,22 +65,6 @@ type Version struct {
 	BuildVersion *string `json:"build_version,omitempty" example:"prerelease.1" doc:"The build version and metadata of this release (e.g. prerelease.1; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
 
 	ContainerImages []*ContainerImage `json:"container_images,omitempty" gorm:"many2many:version_container_images;" doc:"Container images associated with this version."`
-}
-
-// FromRequest converts a request object to a response object.
-func (version *Version) FromRequest(request *VersionRequestBody) {
-	version.VersionBase = request.VersionBase
-
-	if len(request.ContainerImages) < 1 {
-		return
-	}
-
-	version.ContainerImages = make([]*ContainerImage, len(request.ContainerImages))
-
-	for i := range request.ContainerImages {
-		version.ContainerImages[i] = &ContainerImage{}
-		version.ContainerImages[i].FromRequest(request.ContainerImages[i])
-	}
 }
 
 // VersionRequestCreate represents the request when creating a version.

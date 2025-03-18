@@ -19,8 +19,7 @@ func (service *Service) CreateContainerImage(ctx context.Context, request *model
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
-	containerImage := &modelsv0.ContainerImage{}
-	containerImage.FromRequest(&request.Body)
+	containerImage := request.Body.ToResponse()
 
 	// create the container image
 	result := service.Database.Connection.Create(containerImage)
