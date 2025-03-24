@@ -18,7 +18,7 @@ const (
 
 // VersionBase is the base set of fields for all Version objects.
 type VersionBase struct {
-	VersionId *string `json:"version_id,omitempty" example:"v0.1.2" doc:"Version in semantic versioning format."`
+	Id *string `json:"id,omitempty" gorm:"primarykey" example:"v0.1.2" doc:"Version in semantic versioning format."`
 }
 
 // VersionRequestBody is the base set of inputs required to create a Version.
@@ -74,12 +74,12 @@ type VersionRequestCreate struct {
 
 // VersionRequestGet represents the request when getting a version.
 type VersionRequestGet struct {
-	VersionID string `path:"version_id"`
+	Id string `path:"id"`
 }
 
 // VersionRequestDelete represents the request when deleting a version.
 type VersionRequestDelete struct {
-	VersionID string `path:"version_id"`
+	Id string `path:"id"`
 }
 
 // VersionRequestList represents the request when listing all versions.
@@ -119,8 +119,8 @@ func (version *Version) validate() error {
 		return errors.ErrMissingVersionObject
 	}
 
-	if version.VersionId == nil {
-		return errors.ErrMissingVersionParameterId
+	if version.Id == nil {
+		return errors.ErrMissingVersionParameterVersionId
 	}
 
 	re, err := regexp.Compile(versionRegex)
@@ -128,9 +128,9 @@ func (version *Version) validate() error {
 		return fmt.Errorf("invalid regex pattern [%s]: %w", versionRegex, err)
 	}
 
-	if !re.MatchString(*version.VersionId) {
+	if !re.MatchString(*version.Id) {
 		return fmt.Errorf("input [%s] does not match the required pattern [%s]",
-			*version.VersionId,
+			*version.Id,
 			versionRegex,
 		)
 	}
@@ -141,11 +141,11 @@ func (version *Version) validate() error {
 // setVersioning sets the major, minor, bugfix and build versions for a specific version.  It also
 // performs some basic mutations and validations againt the set version.
 func (version *Version) setVersioning() error {
-	versionId := *version.VersionId
+	versionId := *version.Id
 
 	// add 'v' prefix if missing
 	if versionId[0] != 'v' {
-		version.VersionId = pointers.FromString("v" + versionId)
+		version.Id = pointers.FromString("v" + versionId)
 	}
 
 	// regular expression for semantic versioning with optional 'v' prefix

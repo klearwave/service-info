@@ -1,7 +1,6 @@
 -- +goose Up
 CREATE TABLE versions (
-    id SERIAL PRIMARY KEY,
-    version_id VARCHAR(32) NOT NULL UNIQUE,
+    id VARCHAR(32) NOT NULL UNIQUE PRIMARY KEY,
     stable BOOLEAN DEFAULT FALSE,
     x_version INT NOT NULL,
     y_version INT NOT NULL,

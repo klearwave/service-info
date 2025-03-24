@@ -37,13 +37,13 @@ func (service *Service) GetVersion(ctx context.Context, request *modelsv0.Versio
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
-	if request.VersionID == "" {
-		return nil, apierrors.ErrMissingVersionParameterId
+	if request.Id == "" {
+		return nil, apierrors.ErrMissingVersionParameterVersionId
 	}
 
 	response := &modelsv0.VersionResponse{Body: modelsv0.Version{}}
 
-	result := service.Database.Connection.Where(map[string]interface{}{"version_id": request.VersionID}).
+	result := service.Database.Connection.Where(map[string]interface{}{"id": request.Id}).
 		Preload("ContainerImages").
 		First(&response.Body)
 	if result.Error != nil {
@@ -51,7 +51,7 @@ func (service *Service) GetVersion(ctx context.Context, request *modelsv0.Versio
 			response.Status = http.StatusNotFound
 
 			return response, huma.Error404NotFound(
-				fmt.Sprintf("unable to find version with version_id: [%s]", request.VersionID),
+				fmt.Sprintf("unable to find version with id: [%s]", request.Id),
 				result.Error,
 			)
 		}
@@ -61,11 +61,11 @@ func (service *Service) GetVersion(ctx context.Context, request *modelsv0.Versio
 		return response, result.Error
 	}
 
-	if *response.Body.VersionId == "" {
+	if *response.Body.Id == "" {
 		response.Status = http.StatusNotFound
 
 		return response, huma.Error404NotFound(
-			fmt.Sprintf("found version with missing version_id: [%s]", request.VersionID),
+			fmt.Sprintf("found version with missing id: [%s]", request.Id),
 			result.Error,
 		)
 	}
@@ -97,16 +97,17 @@ func (service *Service) DeleteVersion(ctx context.Context, request *modelsv0.Ver
 
 	version := modelsv0.Version{}
 
-	if request.VersionID == "" {
-		return nil, apierrors.ErrMissingVersionParameterId
+	if request.Id == "" {
+		return nil, apierrors.ErrMissingVersionParameterVersionId
 	}
 
-	if _, err := service.Database.FindBy("version_id", request.VersionID, &version); err != nil {
+	if _, err := service.Database.FindBy("id", request.Id, &version); err != nil {
 		return nil, err
 	}
 
-	if err := service.Database.Delete(version.Id, version); err != nil {
-		return nil, err
+	result := service.Database.Connection.Delete(version)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	response := &models.DeleteResponse{}
@@ -120,15 +121,27 @@ func (service *Service) GetVersionContainerImages(ctx context.Context, request *
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
-	var containerImages []modelsv0.ContainerImage
+	if request.Id == "" {
+		return nil, apierrors.ErrMissingVersionParameterVersionId
+	}
+
+	version := &modelsv0.Version{
+		VersionBase: modelsv0.VersionBase{
+			Id: &request.Id,
+		},
+	}
 
 	response := &modelsv0.ContainerImagesResponse{}
 
-	err := service.Database.Connection.Model(&modelsv0.ContainerImage{}).Preload("Versions").Find(&containerImages).Error
+	err := service.Database.Connection.
+		Model(version).
+		Association("ContainerImages").
+		Find(&response.Body)
+
 	if err != nil {
 		response.Status = http.StatusInternalServerError
 
-		return response, nil
+		return nil, err
 	}
 
 	return response, nil

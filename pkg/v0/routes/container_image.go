@@ -102,7 +102,7 @@ func GetContainerImageVersions(input *models.ContainerImage) huma.Operation {
 				Required:    true,
 			},
 		},
-		Tags: versionInfoTags(),
+		Tags: containerImagesGroupTags(),
 	}
 }
 

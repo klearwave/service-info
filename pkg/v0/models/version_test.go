@@ -46,7 +46,7 @@ func TestVersion_BeforeCreate(t *testing.T) {
 			name: "fail: invalid version id",
 			fields: fields{
 				VersionBase: VersionBase{
-					VersionId: pointers.FromString("v1.2"),
+					Id: pointers.FromString("v1.2"),
 				},
 			},
 			wantErr: true,
@@ -55,12 +55,12 @@ func TestVersion_BeforeCreate(t *testing.T) {
 			name: "success: v is prepended",
 			fields: fields{
 				VersionBase: VersionBase{
-					VersionId: pointers.FromString("1.2.3"),
+					Id: pointers.FromString("1.2.3"),
 				},
 			},
 			want: &Version{
 				VersionBase: VersionBase{
-					VersionId: pointers.FromString("v1.2.3"),
+					Id: pointers.FromString("v1.2.3"),
 				},
 				XVersion: pointers.Int(1),
 				YVersion: pointers.Int(2),
@@ -72,12 +72,12 @@ func TestVersion_BeforeCreate(t *testing.T) {
 			name: "success: x/y/z versions are set",
 			fields: fields{
 				VersionBase: VersionBase{
-					VersionId: pointers.FromString("v1.2.3"),
+					Id: pointers.FromString("v1.2.3"),
 				},
 			},
 			want: &Version{
 				VersionBase: VersionBase{
-					VersionId: pointers.FromString("v1.2.3"),
+					Id: pointers.FromString("v1.2.3"),
 				},
 				XVersion: pointers.Int(1),
 				YVersion: pointers.Int(2),
@@ -89,12 +89,12 @@ func TestVersion_BeforeCreate(t *testing.T) {
 			name: "success: build version is set",
 			fields: fields{
 				VersionBase: VersionBase{
-					VersionId: pointers.FromString("v1.2.3-prerelease.1"),
+					Id: pointers.FromString("v1.2.3-prerelease.1"),
 				},
 			},
 			want: &Version{
 				VersionBase: VersionBase{
-					VersionId: pointers.FromString("v1.2.3-prerelease.1"),
+					Id: pointers.FromString("v1.2.3-prerelease.1"),
 				},
 				XVersion:     pointers.Int(1),
 				YVersion:     pointers.Int(2),

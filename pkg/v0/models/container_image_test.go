@@ -26,7 +26,7 @@ func TestContainerImage_Parse(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Model              models.Model
+		Model              models.ModelWithId
 		ContainerImageBase ContainerImageBase
 		ImageRegistry      *string
 		ImageName          *string
@@ -179,7 +179,7 @@ func TestContainerImage_Parse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			containerImage := &ContainerImage{
-				Model:              tt.fields.Model,
+				ModelWithId:        tt.fields.Model,
 				ContainerImageBase: tt.fields.ContainerImageBase,
 				ImageRegistry:      tt.fields.ImageRegistry,
 				ImageName:          tt.fields.ImageName,

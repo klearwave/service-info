@@ -2,18 +2,15 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+
 	"github.com/klearwave/service-info/pkg/db"
+	apierrors "github.com/klearwave/service-info/pkg/errors"
 	"github.com/klearwave/service-info/pkg/models"
 	modelsv0 "github.com/klearwave/service-info/pkg/v0/models"
-)
-
-var (
-	ErrMissingContainerImageId = errors.New("missing id parameter")
 )
 
 // CreateContainerImage defines the service for creating a new container image and storing in a database.
@@ -79,7 +76,7 @@ func (service *Service) DeleteContainerImage(ctx context.Context, request *model
 	containerImage := modelsv0.ContainerImage{}
 
 	if request.Id == db.MissingDatabaseID {
-		return nil, ErrMissingContainerImageId
+		return nil, apierrors.ErrMissingVersionParameterId
 	}
 
 	if _, err := service.Database.FindBy("id", request.Id, &containerImage); err != nil {
@@ -101,16 +98,27 @@ func (service *Service) GetContainerImageVersions(ctx context.Context, request *
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
-	var versions []modelsv0.Version
+	if request.Id == 0 {
+		return nil, apierrors.ErrMissingVersionParameterVersionId
+	}
+
+	containerImage := &modelsv0.ContainerImage{
+		ModelWithId: models.ModelWithId{
+			Id: request.Id,
+		},
+	}
 
 	response := &modelsv0.VersionsResponse{}
 
-	err := service.Database.Connection.Model(&modelsv0.Version{}).Preload("ContainerImages").Find(&versions).Error
+	err := service.Database.Connection.
+		Model(containerImage).
+		Association("Versions").
+		Find(&response.Body)
 
 	if err != nil {
 		response.Status = http.StatusInternalServerError
 
-		return response, nil
+		return nil, err
 	}
 
 	return response, nil

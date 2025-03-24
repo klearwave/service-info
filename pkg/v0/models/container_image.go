@@ -35,21 +35,22 @@ func (request ContainerImageRequestBody) TableName() string {
 
 // FromRequest converts a request object to a response object.
 func (request *ContainerImageRequestBody) ToResponse() *ContainerImage {
-	response := &ContainerImage{}
-	response.ContainerImageBase = request.ContainerImageBase
-
-	return response
+	return &ContainerImage{
+		ContainerImageBase: request.ContainerImageBase,
+	}
 }
 
 // ContainerImage represents the full database schema for a ContainerImage.  The full schema is also used in responses.
 type ContainerImage struct {
-	models.Model
+	models.ModelWithId
 
 	ContainerImageBase
 
 	ImageRegistry *string `json:"image_registry,omitempty" gorm:"default:docker.io" example:"ghcr.io" doc:"Container image registry without the image name, tag or sha256sum information."`
 	ImageName     *string `json:"image_name,omitempty" example:"klearwave/service-info" doc:"Container image name without the registry, tag or sha256sum information."`
 	ImageTag      *string `json:"image_tag,omitempty" gorm:"default:latest" example:"v0.1.2" doc:"Container image tag without the registry, image name or sha256 information."`
+
+	Versions []*Version `json:"versions,omitempty" gorm:"many2many:version_container_images;" doc:"Versions associated with this container image."`
 }
 
 // EqualTo compares another container image for equality and returns

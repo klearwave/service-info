@@ -13,7 +13,7 @@ CREATE TABLE container_images (
 
 CREATE TABLE version_container_images (
     id SERIAL PRIMARY KEY,
-    version_id INTEGER,
+    version_id VARCHAR(32),
     container_image_id INTEGER,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (version_id, container_image_id),

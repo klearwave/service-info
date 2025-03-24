@@ -53,6 +53,7 @@ func (s *server) RegisterRoutes() {
 	huma.Register(s.API, routes.GetVersion(&version), s.ServiceV0.GetVersion)
 	huma.Register(s.API, routes.GetVersions(&version), s.ServiceV0.GetVersions)
 	huma.Register(s.API, routes.DeleteVersion(&version), s.ServiceV0.DeleteVersion)
+	huma.Register(s.API, routes.GetVersionContainerImages(&version), s.ServiceV0.GetVersionContainerImages)
 
 	// container image routes v0
 	containerImage := models.ContainerImage{}

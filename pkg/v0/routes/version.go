@@ -23,11 +23,11 @@ func CreateVersion(input *models.Version) huma.Operation {
 		Method:        http.MethodPost,
 		DefaultStatus: http.StatusCreated,
 		Path:          v0.PathFor(DefaultVersionsPath),
-		Tags:          versionInfoTags(),
+		Tags:          versionGroupTags(),
 	}
 }
 
-// GetVersion defines the routing and subsequent specification for GET to /api/v0/versions/{version_id}.
+// GetVersion defines the routing and subsequent specification for GET to /api/v0/versions/{id}.
 func GetVersion(input *models.Version) huma.Operation {
 	return huma.Operation{
 		OperationID:   "getVersion",
@@ -35,17 +35,17 @@ func GetVersion(input *models.Version) huma.Operation {
 		Description:   "Get specific version information.",
 		Method:        http.MethodGet,
 		DefaultStatus: http.StatusOK,
-		Path:          v0.PathFor(DefaultVersionsPath) + "/{version_id}",
+		Path:          v0.PathFor(DefaultVersionsPath) + "/{id}",
 		Parameters: []*huma.Param{
 			{
-				Name:        "version_id",
+				Name:        "id",
 				Description: "Version ID to get.",
 				Example:     "v0.1.2",
 				In:          "path",
 				Required:    true,
 			},
 		},
-		Tags: versionInfoTags(),
+		Tags: versionGroupTags(),
 	}
 }
 
@@ -58,11 +58,11 @@ func GetVersions(input *models.Version) huma.Operation {
 		Method:        http.MethodGet,
 		DefaultStatus: http.StatusOK,
 		Path:          v0.PathFor(DefaultVersionsPath),
-		Tags:          versionInfoTags(),
+		Tags:          versionGroupTags(),
 	}
 }
 
-// GetVersionContainerImages defines the routing and subsequent specification for GET to /api/v0/versions/{version_id}/container_images.
+// GetVersionContainerImages defines the routing and subsequent specification for GET to /api/v0/versions/{id}/container_images.
 func GetVersionContainerImages(input *models.Version) huma.Operation {
 	return huma.Operation{
 		OperationID:   "getVersionContainerImages",
@@ -70,21 +70,21 @@ func GetVersionContainerImages(input *models.Version) huma.Operation {
 		Description:   "Get container images for a specific version.",
 		Method:        http.MethodGet,
 		DefaultStatus: http.StatusOK,
-		Path:          v0.PathFor(DefaultVersionsPath) + "/{version_id}/container_images",
+		Path:          v0.PathFor(DefaultVersionsPath) + "/{id}/container_images",
 		Parameters: []*huma.Param{
 			{
-				Name:        "version_id",
+				Name:        "id",
 				Description: "Version ID to get container images for.",
 				Example:     "v0.1.2",
 				In:          "path",
 				Required:    true,
 			},
 		},
-		Tags: versionInfoTags(),
+		Tags: versionGroupTags(),
 	}
 }
 
-// DeleteVersion defines the routing and subsequent specification for DELETE to /api/v0/versions/{version_id}.
+// DeleteVersion defines the routing and subsequent specification for DELETE to /api/v0/versions/{id}.
 func DeleteVersion(input *models.Version) huma.Operation {
 	return huma.Operation{
 		OperationID:   "deleteVersion",
@@ -92,22 +92,22 @@ func DeleteVersion(input *models.Version) huma.Operation {
 		Description:   "Delete a specific version.",
 		Method:        http.MethodDelete,
 		DefaultStatus: http.StatusOK,
-		Path:          v0.PathFor(DefaultVersionsPath) + "/{version_id}",
+		Path:          v0.PathFor(DefaultVersionsPath) + "/{id}",
 		Parameters: []*huma.Param{
 			{
-				Name:        "version_id",
+				Name:        "id",
 				Description: "Version ID to delete.",
 				Example:     "v0.1.2",
 				In:          "path",
 				Required:    true,
 			},
 		},
-		Tags: versionInfoTags(),
+		Tags: versionGroupTags(),
 	}
 }
 
 // versionGroupTags defines the group tags that group similar APIs in the documentation site.
-func versionInfoTags() []string {
+func versionGroupTags() []string {
 	return []string{
 		DefaultVersionsGroupTag,
 		v0.DefaultGroupTag,

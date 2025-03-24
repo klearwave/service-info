@@ -22,7 +22,7 @@ func (input NodeImageInput) TableName() string {
 
 // NodeImage represents the full database schema for a NodeImage.
 type NodeImage struct {
-	models.Model
+	models.ModelWithId
 
 	NodeImageInput
 }
