@@ -15,12 +15,7 @@ func main() {
 	}
 
 	// ensure we have database connectivity
-	db, err := server.Database.Connection.DB()
-	if err != nil {
-		panic(err)
-	}
-
-	if err := db.Ping(); err != nil {
+	if err := server.Database.Wait(30); err != nil {
 		panic(err)
 	}
 

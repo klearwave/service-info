@@ -10,16 +10,14 @@ services:
     image: postgres:16.8-bullseye
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "${DB_USERNAME}"]
       interval: 5s
       retries: 5
       start_period: 10s
-    # NOTE: expose port 5432 in dev for ease of querying database.
-    ports:
-      - '5432:5432'
 
   #
   # migrations
@@ -31,7 +29,7 @@ services:
     entrypoint:
       - "/bin/goose"
       - "up"
-    image: ghcr.io/klearwave/service-info:unstable
+    image: ghcr.io/klearwave/service-info:${SERVICE_VERSION}
     restart: no
     depends_on:
       db:
@@ -39,7 +37,7 @@ services:
     environment:
       GOOSE_DRIVER: postgres
       GOOSE_MIGRATION_DIR: /migrations
-      GOOSE_DBSTRING: postgres://postgres:postgres@db:5432/postgres
+      GOOSE_DBSTRING: postgres://${DB_USERNAME}:${DB_PASSWORD}@db:5432/${DB_NAME}
     links:
       - db
 
@@ -50,7 +48,7 @@ services:
     container_name: api
     entrypoint:
       - service
-    image: ghcr.io/klearwave/service-info:unstable
+    image: ghcr.io/klearwave/service-info:${SERVICE_VERSION}
     restart: always
     depends_on:
       - db
@@ -60,8 +58,8 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: postgres
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
     links:
       - db

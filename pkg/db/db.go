@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -72,4 +73,30 @@ func (database *Database) Delete(id int, model interface{}) error {
 	}
 
 	return nil
+}
+
+// Wait waits for a database connection to be established.
+func (database *Database) Wait(timeoutSeconds int64) error {
+	db, err := database.Connection.DB()
+	if err != nil {
+		return fmt.Errorf("unable to create sql database connection; %w", err)
+	}
+
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	timeoutChan := time.After(time.Duration(timeoutSeconds) * time.Second)
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := db.Ping(); err == nil {
+				return nil
+			} else {
+				continue
+			}
+		case <-timeoutChan:
+			return fmt.Errorf("database connection timeout after %d seconds", timeoutSeconds)
+		}
+	}
 }
