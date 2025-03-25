@@ -3,12 +3,13 @@ package main
 import (
 	"net/http"
 
+	"github.com/klearwave/service-info/pkg/db"
 	"github.com/klearwave/service-info/pkg/server"
 )
 
 func main() {
 	// create the server
-	server, err := server.NewServer()
+	server, err := server.NewServer(&db.Connection{})
 	if err != nil {
 		panic(err)
 	}

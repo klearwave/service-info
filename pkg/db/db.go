@@ -1,9 +1,7 @@
 package db
 
 import (
-	"errors"
 	"fmt"
-	"os"
 	"sync"
 
 	"gorm.io/driver/postgres"
@@ -14,53 +12,17 @@ const (
 	MissingDatabaseID int = 0
 )
 
-var (
-	ErrMissingDatabaseHost     = errors.New("missing DB_HOST environment variable")
-	ErrMissingDatabaseName     = errors.New("missing DB_NAME environment variable")
-	ErrMissingDatabaseUsername = errors.New("missing DB_USERNAME environment variable")
-	ErrMissingDatabasePassword = errors.New("missing DB_PASSWORD environment variable")
-)
-
 type Database struct {
 	Lock       *sync.Mutex
 	Connection *gorm.DB
 }
 
-func NewDatabase() (*Database, error) {
-	dbHost := os.Getenv("DB_HOST")
-	if dbHost == "" {
-		return nil, ErrMissingDatabaseHost
+func NewDatabase(connection *Connection) (*Database, error) {
+	if err := connection.Parse(); err != nil {
+		return nil, fmt.Errorf("unable to parse database connection; %w", err)
 	}
 
-	dbPort := os.Getenv("DB_PORT")
-	if dbPort == "" {
-		dbPort = "5432"
-	}
-
-	dbName := os.Getenv("DB_NAME")
-	if dbName == "" {
-		return nil, ErrMissingDatabaseName
-	}
-
-	dbUser := os.Getenv("DB_USERNAME")
-	if dbUser == "" {
-		return nil, ErrMissingDatabaseUsername
-	}
-
-	dbPassword := os.Getenv("DB_PASSWORD")
-	if dbPassword == "" {
-		return nil, ErrMissingDatabasePassword
-	}
-
-	connectionString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-		dbHost,
-		dbPort,
-		dbUser,
-		dbName,
-		dbPassword,
-	)
-
-	db, err := gorm.Open(postgres.Open(connectionString))
+	db, err := gorm.Open(postgres.Open(connection.String))
 	if err != nil {
 		return nil, err
 	}

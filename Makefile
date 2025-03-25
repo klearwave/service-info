@@ -22,3 +22,12 @@ up:
 
 down:
 	docker compose down
+
+# e2e test with embedded db/http server
+test-e2e-embedded:
+	export E2E_EMBEDDED=true && \
+		go test ./test -run ^TestE2E$
+
+# e2e test against active db/http server
+test-e2e:
+	go test ./test -run ^TestE2E$

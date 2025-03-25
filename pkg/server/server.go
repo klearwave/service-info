@@ -27,7 +27,7 @@ type server struct {
 
 // NewServer returns a new instance of a server.  It returns an error if the
 // server cannot be created.
-func NewServer() (*server, error) {
+func NewServer(connection *db.Connection) (*server, error) {
 	s := &server{Router: gin.Default()}
 
 	config := huma.DefaultConfig("Information API", version)
@@ -35,7 +35,7 @@ func NewServer() (*server, error) {
 
 	s.API = humagin.New(s.Router, config)
 
-	db, err := db.NewDatabase()
+	db, err := db.NewDatabase(connection)
 	if err != nil {
 		return nil, err
 	}

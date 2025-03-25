@@ -4,7 +4,11 @@ go 1.22.1
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.27.0
+	github.com/fergusstrange/embedded-postgres v1.30.0
 	github.com/gin-gonic/gin v1.10.0
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/lib/pq v1.10.9
+	github.com/pressly/goose v2.7.0+incompatible
 	gorm.io/gorm v1.25.12
 )
 
@@ -15,8 +19,9 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/kr/text v0.2.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 )
 

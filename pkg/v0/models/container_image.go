@@ -171,7 +171,7 @@ func (containerImage *ContainerImage) validate() error {
 		apierrors.ErrMissingContainerImageParameterSHA256Sum:  containerImage.SHA256Sum,
 		apierrors.ErrMissingContainerImageParameterCommitHash: containerImage.CommitHash,
 	} {
-		if value == nil {
+		if value == nil || *value == "" {
 			missingErrors = append(missingErrors, err)
 		}
 	}
