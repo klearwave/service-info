@@ -8,6 +8,7 @@ services:
   db:
     container_name: db
     image: postgres:16.8-bullseye
+    pull_policy: always
     restart: always
     environment:
       - POSTGRES_USER=${DB_USERNAME}
@@ -30,6 +31,7 @@ services:
       - "/bin/goose"
       - "up"
     image: ghcr.io/klearwave/service-info:${SERVICE_VERSION}
+    pull_policy: always
     restart: no
     depends_on:
       db:
@@ -49,6 +51,7 @@ services:
     entrypoint:
       - service
     image: ghcr.io/klearwave/service-info:${SERVICE_VERSION}
+    pull_policy: always
     restart: always
     depends_on:
       - db

@@ -48,6 +48,7 @@ jobs:
         uses: crazy-max/ghaction-container-scan@v3
         with:
           image: "${{ env.IMAGE }}:latest"
+          dockerfile: ./Dockerfile
           severity_threshold: CRITICAL
           # TODO: change back once goose fixes https://avd.aquasec.com/nvd/cve-2025-30204 
           # severity_threshold: HIGH
