@@ -18,7 +18,7 @@ COPY migrations/ migrations/
 
 RUN CGO_ENABLED=0 go build -o /src/service ./pkg/cmd && \
         chmod +x /src/service
-RUN export GOBIN=/src && go install github.com/pressly/goose/v3/cmd/goose@latest && \
+RUN export GOBIN=/src && go install github.com/pressly/goose/v3/cmd/goose@v3.24.1 && \
         chmod +x /src/goose
 
 #

@@ -13,6 +13,14 @@ image-login:
 image-push:
 	@docker push $(IMAGE):$(IMAGE_VERSION)
 
+# TODO: change back once goose fixes https://avd.aquasec.com/nvd/cve-2025-30204 
+image-scan:
+	@trivy image \
+		--ignore-unfixed \
+		--severity CRITICAL \
+		--exit-code 1 \
+		--no-progress $(IMAGE):$(IMAGE_VERSION) || true
+
 #
 # testing
 #
