@@ -106,41 +106,16 @@ func (version *Version) BeforeCreate(tx *gorm.DB) error {
 	}
 
 	// set the x, y and z versions for the version
-	if err := version.setVersioning(); err != nil {
+	if err := version.Parse(); err != nil {
 		return fmt.Errorf("%s; %w", errors.ErrInvalidVersion, err)
 	}
 
 	return nil
 }
 
-// validate validates that a specific version is valid.
-func (version *Version) validate() error {
-	if version == nil {
-		return errors.ErrMissingVersionObject
-	}
-
-	if version.Id == nil {
-		return errors.ErrMissingVersionParameterVersionId
-	}
-
-	re, err := regexp.Compile(versionRegex)
-	if err != nil {
-		return fmt.Errorf("invalid regex pattern [%s]: %w", versionRegex, err)
-	}
-
-	if !re.MatchString(*version.Id) {
-		return fmt.Errorf("input [%s] does not match the required pattern [%s]",
-			*version.Id,
-			versionRegex,
-		)
-	}
-
-	return nil
-}
-
-// setVersioning sets the major, minor, bugfix and build versions for a specific version.  It also
+// Parse sets the major, minor, bugfix and build versions for a specific version.  It also
 // performs some basic mutations and validations againt the set version.
-func (version *Version) setVersioning() error {
+func (version *Version) Parse() error {
 	versionId := *version.Id
 
 	// add 'v' prefix if missing
@@ -178,6 +153,31 @@ func (version *Version) setVersioning() error {
 		// if this is not a build version, e.g. v1.2.3-alpha.1, then
 		// we can consider it to be a stable version
 		version.Stable = pointers.Bool(true)
+	}
+
+	return nil
+}
+
+// validate validates that a specific version is valid.
+func (version *Version) validate() error {
+	if version == nil {
+		return errors.ErrMissingVersionObject
+	}
+
+	if version.Id == nil {
+		return errors.ErrMissingVersionParameterVersionId
+	}
+
+	re, err := regexp.Compile(versionRegex)
+	if err != nil {
+		return fmt.Errorf("invalid regex pattern [%s]: %w", versionRegex, err)
+	}
+
+	if !re.MatchString(*version.Id) {
+		return fmt.Errorf("input [%s] does not match the required pattern [%s]",
+			*version.Id,
+			versionRegex,
+		)
 	}
 
 	return nil

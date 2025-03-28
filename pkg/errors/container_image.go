@@ -10,5 +10,8 @@ var (
 	ErrMissingContainerImageParameterSHA256Sum  = errors.New("missing required sha256sum parameter for container image")
 	ErrMissingContainerImageParameterCommitHash = errors.New("missing required commit_hash parameter for container image")
 
+	ErrInvalidContainerImageParameterSHA256Sum  = errors.New("invalid sha256sum parameter for container image")
+	ErrInvalidContainerImageParameterCommitHash = errors.New("invalid commit_hash parameter for container image")
+
 	ErrMismatchParameter = errors.New("mismatch in container image parameter")
 )

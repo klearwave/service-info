@@ -56,4 +56,4 @@ test-infra:
 test-infra-destroy:
 	cd deploy/infra && \
 		terraform init && \
-		terraform apply -var-file=test.tfvars
+		terraform apply -var-file=test.tfvars -destroy

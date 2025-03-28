@@ -10,6 +10,7 @@ import (
 	apierrors "github.com/klearwave/service-info/pkg/errors"
 	"github.com/klearwave/service-info/pkg/models"
 	"github.com/klearwave/service-info/pkg/utils/pointers"
+	"github.com/klearwave/service-info/pkg/utils/validate"
 )
 
 const (
@@ -118,8 +119,8 @@ func (containerImage *ContainerImage) Parse() error {
 		return apierrors.ErrMissingContainerImageObject
 	}
 
-	if containerImage.Image == nil {
-		return apierrors.ErrInvalidContainerImage
+	if containerImage.Image == nil || *containerImage.Image == "" {
+		return apierrors.ErrMissingContainerImageParameterImage
 	}
 
 	image := *containerImage.Image
@@ -164,20 +165,34 @@ func (containerImage *ContainerImage) Parse() error {
 
 // validate validates that a specific container image is valid.
 func (containerImage *ContainerImage) validate() error {
-	missingErrors := []error{}
+	allErrors := []error{}
 
-	for err, value := range map[error]*string{
-		apierrors.ErrMissingContainerImageParameterImage:      containerImage.Image,
-		apierrors.ErrMissingContainerImageParameterSHA256Sum:  containerImage.SHA256Sum,
-		apierrors.ErrMissingContainerImageParameterCommitHash: containerImage.CommitHash,
-	} {
-		if value == nil || *value == "" {
-			missingErrors = append(missingErrors, err)
-		}
+	// validate sha256sum
+	if containerImage.SHA256Sum == nil {
+		return apierrors.ErrMissingContainerImageParameterSHA256Sum
 	}
 
-	if len(missingErrors) > 0 {
-		return fmt.Errorf("%v", missingErrors)
+	if err := validate.SHA256Sum(*containerImage.SHA256Sum); err != nil {
+		allErrors = append(
+			allErrors,
+			fmt.Errorf("%s; %w", err.Error(), apierrors.ErrInvalidContainerImageParameterSHA256Sum),
+		)
+	}
+
+	// validate commit hash
+	if containerImage.CommitHash == nil {
+		return apierrors.ErrMissingContainerImageParameterCommitHash
+	}
+
+	if err := validate.CommitHash(*containerImage.CommitHash); err != nil {
+		allErrors = append(
+			allErrors,
+			fmt.Errorf("%s; %w", err.Error(), apierrors.ErrInvalidContainerImageParameterCommitHash),
+		)
+	}
+
+	if len(allErrors) > 0 {
+		return fmt.Errorf("%+v", allErrors)
 	}
 
 	return nil
