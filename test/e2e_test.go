@@ -16,12 +16,12 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose"
 
+	v0 "github.com/klearwave/service-info/pkg/api/v0"
+	"github.com/klearwave/service-info/pkg/api/v0/models"
+	"github.com/klearwave/service-info/pkg/api/v0/routes"
 	"github.com/klearwave/service-info/pkg/db"
 	"github.com/klearwave/service-info/pkg/server"
 	"github.com/klearwave/service-info/pkg/utils/pointers"
-	v0 "github.com/klearwave/service-info/pkg/v0"
-	"github.com/klearwave/service-info/pkg/v0/models"
-	"github.com/klearwave/service-info/pkg/v0/routes"
 )
 
 // httpTests defines the httpTests to run against the REST API.  These will be executed in order

@@ -9,9 +9,9 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"gorm.io/gorm"
 
+	modelsv0 "github.com/klearwave/service-info/pkg/api/v0/models"
 	apierrors "github.com/klearwave/service-info/pkg/errors"
 	"github.com/klearwave/service-info/pkg/models"
-	modelsv0 "github.com/klearwave/service-info/pkg/v0/models"
 )
 
 // CreateVersion defines the service for creating a new version and storing in a database.

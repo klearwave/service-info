@@ -7,10 +7,10 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
+	modelsv0 "github.com/klearwave/service-info/pkg/api/v0/models"
 	"github.com/klearwave/service-info/pkg/db"
 	apierrors "github.com/klearwave/service-info/pkg/errors"
 	"github.com/klearwave/service-info/pkg/models"
-	modelsv0 "github.com/klearwave/service-info/pkg/v0/models"
 )
 
 // CreateContainerImage defines the service for creating a new container image and storing in a database.

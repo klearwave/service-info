@@ -5,11 +5,11 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
 
+	"github.com/klearwave/service-info/pkg/api/v0/models"
+	"github.com/klearwave/service-info/pkg/api/v0/routes"
+	"github.com/klearwave/service-info/pkg/api/v0/service"
+	servicev0 "github.com/klearwave/service-info/pkg/api/v0/service"
 	"github.com/klearwave/service-info/pkg/db"
-	"github.com/klearwave/service-info/pkg/v0/models"
-	"github.com/klearwave/service-info/pkg/v0/routes"
-	"github.com/klearwave/service-info/pkg/v0/service"
-	servicev0 "github.com/klearwave/service-info/pkg/v0/service"
 )
 
 var version string = "unstable"

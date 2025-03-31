@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
+	modelsv0 "github.com/klearwave/service-info/pkg/api/v0/models"
 	"github.com/klearwave/service-info/pkg/db"
 	"github.com/klearwave/service-info/pkg/models"
-	modelsv0 "github.com/klearwave/service-info/pkg/v0/models"
 )
 
 var (

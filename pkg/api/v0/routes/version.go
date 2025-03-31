@@ -5,8 +5,8 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
-	v0 "github.com/klearwave/service-info/pkg/v0"
-	"github.com/klearwave/service-info/pkg/v0/models"
+	v0 "github.com/klearwave/service-info/pkg/api/v0"
+	"github.com/klearwave/service-info/pkg/api/v0/models"
 )
 
 const (
