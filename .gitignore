@@ -3,3 +3,9 @@
 .terraform.lock.hcl
 terraform.tfstate
 terraform.tfstate.backup
+
+# ignore any genereated cert data
+*.crt
+*.key
+*.pem
+*.csr

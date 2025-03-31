@@ -57,7 +57,7 @@ services:
       - db
       - migrations
     ports:
-      - 8888:8888
+      - 8443:8443
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -66,3 +66,15 @@ services:
       DB_NAME: ${DB_NAME}
     links:
       - db
+    configs:
+      - source: tls_crt
+        target: /tls.crt
+      - source: tls_key
+        target: /tls.key
+configs:
+  tls_crt:
+    content: |
+      ${TLS_CERT}
+  tls_key:
+    content: |
+      ${TLS_KEY}
