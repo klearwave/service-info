@@ -18,6 +18,15 @@ func (service *Service) CreateContainerImage(ctx context.Context, request *model
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
+	// authorize the request
+	authorized, err := request.Authorization.Authorized()
+	if err != nil || !authorized {
+		return nil, huma.Error401Unauthorized(
+			"request requires basic authentication",
+			err,
+		)
+	}
+
 	containerImage := request.Body.ToResponse()
 
 	// create the container image
@@ -72,6 +81,15 @@ func (service *Service) GetContainerImages(ctx context.Context, request *modelsv
 func (service *Service) DeleteContainerImage(ctx context.Context, request *modelsv0.ContainerImageRequestDelete) (*models.DeleteResponse, error) {
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
+
+	// authorize the request
+	authorized, err := request.Authorization.Authorized()
+	if err != nil || !authorized {
+		return nil, huma.Error401Unauthorized(
+			"request requires basic authentication",
+			err,
+		)
+	}
 
 	containerImage := modelsv0.ContainerImage{}
 

@@ -200,6 +200,7 @@ func (containerImage *ContainerImage) validate() error {
 
 // ContainerImageRequestCreate represents the request when creating a version.
 type ContainerImageRequestCreate struct {
+	models.Authorization
 	Body ContainerImageRequestBody
 }
 
@@ -210,6 +211,7 @@ type ContainerImageRequestGet struct {
 
 // ContainerImageRequestDelete represents the request when deleting a version.
 type ContainerImageRequestDelete struct {
+	models.Authorization
 	Id int `path:"id"`
 }
 

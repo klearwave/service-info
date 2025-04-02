@@ -69,6 +69,8 @@ type Version struct {
 
 // VersionRequestCreate represents the request when creating a version.
 type VersionRequestCreate struct {
+	models.Authorization
+
 	Body VersionRequestBody
 }
 
@@ -79,6 +81,8 @@ type VersionRequestGet struct {
 
 // VersionRequestDelete represents the request when deleting a version.
 type VersionRequestDelete struct {
+	models.Authorization
+
 	Id string `path:"id"`
 }
 

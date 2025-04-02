@@ -19,6 +19,15 @@ func (service *Service) CreateVersion(ctx context.Context, request *modelsv0.Ver
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
+	// authorize the request
+	authorized, err := request.Authorization.Authorized()
+	if err != nil || !authorized {
+		return nil, huma.Error401Unauthorized(
+			"request requires basic authentication",
+			err,
+		)
+	}
+
 	// create the version
 	response := request.Body.ToResponse()
 
@@ -94,6 +103,15 @@ func (service *Service) GetVersions(ctx context.Context, request *modelsv0.Versi
 func (service *Service) DeleteVersion(ctx context.Context, request *modelsv0.VersionRequestDelete) (*models.DeleteResponse, error) {
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
+
+	// authorize the request
+	authorized, err := request.Authorization.Authorized()
+	if err != nil || !authorized {
+		return nil, huma.Error401Unauthorized(
+			"request requires basic authentication",
+			err,
+		)
+	}
 
 	version := modelsv0.Version{}
 
