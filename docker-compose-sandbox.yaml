@@ -71,10 +71,15 @@ services:
         target: /tls.crt
       - source: tls_key
         target: /tls.key
+    # NOTE: we cannot use healthcheck here as we do not have curl.  See https://github.com/klearwave/service-info/issues/4
+    # healthcheck:
+    #   test: ["CMD", "curl", "-k", "https://localhost:8443/api/v0/docs"]
+    #   interval: 10s
+    #   retries: 3
+    #   start_period: 10s
+    #   timeout: 5s
 configs:
   tls_crt:
-    content: |
-      ${TLS_CERT}
+    file: /volume1/docker/projects/klearwave-service-info/tls.crt
   tls_key:
-    content: |
-      ${TLS_KEY}
+    file: /volume1/docker/projects/klearwave-service-info/tls.key
