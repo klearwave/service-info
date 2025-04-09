@@ -17,17 +17,22 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose"
 
-	v0 "github.com/klearwave/service-info/pkg/api/v0"
-	modelsv0 "github.com/klearwave/service-info/pkg/api/v0/models"
-	"github.com/klearwave/service-info/pkg/api/v0/routes"
+	"github.com/klearwave/service-info/pkg/api"
+	"github.com/klearwave/service-info/pkg/api/model"
+	modelv0 "github.com/klearwave/service-info/pkg/api/model/v0"
+	v0 "github.com/klearwave/service-info/pkg/api/model/v0"
+	createv0 "github.com/klearwave/service-info/pkg/api/model/v0/request/create"
+	deletev0 "github.com/klearwave/service-info/pkg/api/model/v0/request/delete"
+	listv0 "github.com/klearwave/service-info/pkg/api/model/v0/request/list"
+	readv0 "github.com/klearwave/service-info/pkg/api/model/v0/request/read"
+	routev0 "github.com/klearwave/service-info/pkg/api/model/v0/route"
 	"github.com/klearwave/service-info/pkg/db"
-	"github.com/klearwave/service-info/pkg/models"
 	"github.com/klearwave/service-info/pkg/server"
 	"github.com/klearwave/service-info/pkg/utils/pointers"
 )
 
 var authHeader = map[string]string{
-	"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(models.AuthUsername+":"+models.AuthPassword)),
+	"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(api.AuthUsername+":"+api.AuthPassword)),
 }
 
 // httpTests defines the httpTests to run against the REST API.  These will be executed in order
@@ -43,131 +48,135 @@ var httpTests = []struct {
 }{
 	{
 		name: "fail: unauthorized version request (create)",
-		request: modelsv0.VersionRequestBody{
-			VersionBase: modelsv0.VersionBase{
+		request: createv0.VersionBody{
+			VersionBase: modelv0.VersionBase{
 				Id: pointers.FromString("x.y.z"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath),
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
 		method:         http.MethodPost,
 		expectedStatus: http.StatusUnauthorized,
 	},
 	{
 		name: "fail: unauthorized container image request (create)",
-		request: modelsv0.ContainerImageRequestBody{
-			ContainerImageBase: modelsv0.ContainerImageBase{
+		request: createv0.ContainerImageBody{
+			ContainerImageBase: modelv0.ContainerImageBase{
 				Image:      pointers.FromString("postgres2"),
 				SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 				CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath),
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath),
 		method:         http.MethodPost,
 		expectedStatus: http.StatusUnauthorized,
 	},
 	{
 		name: "fail: ensure invalid version",
-		request: modelsv0.VersionRequestBody{
-			VersionBase: modelsv0.VersionBase{
+		request: createv0.VersionBody{
+			VersionBase: modelv0.VersionBase{
 				Id: pointers.FromString("x.y.z"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath),
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
-		expectedStatus: http.StatusInternalServerError,
+		expectedStatus: http.StatusBadRequest,
 	},
 	{
 		name: "fail: ensure invalid container image (missing sha256sum)",
-		request: modelsv0.ContainerImageRequestBody{
-			ContainerImageBase: modelsv0.ContainerImageBase{
+		request: createv0.ContainerImageBody{
+			ContainerImageBase: modelv0.ContainerImageBase{
 				Image:      pointers.FromString("postgres"),
 				CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath),
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
-		expectedStatus: http.StatusInternalServerError,
+		expectedStatus: http.StatusBadRequest,
 	},
 	{
 		name: "fail: ensure invalid container image (missing commit hash)",
-		request: modelsv0.ContainerImageRequestBody{
-			ContainerImageBase: modelsv0.ContainerImageBase{
+		request: createv0.ContainerImageBody{
+			ContainerImageBase: modelv0.ContainerImageBase{
 				Image:     pointers.FromString("postgres"),
 				SHA256Sum: pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath),
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
-		expectedStatus: http.StatusInternalServerError,
+		expectedStatus: http.StatusBadRequest,
 	},
 	{
 		name: "fail: ensure missing version is not found",
-		request: modelsv0.VersionRequestGet{
-			Id: "v0.0.1",
+		request: readv0.VersionRequest{
+			StringFetcher: model.StringFetcher{
+				Id: "v0.0.1",
+			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath) + "/v0.0.1",
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath) + "/v0.0.1",
 		method:         http.MethodGet,
 		expectedStatus: http.StatusNotFound,
 	},
 	{
 		name: "fail: ensure missing container image is not found",
-		request: modelsv0.ContainerImageRequestGet{
-			Id: 999,
+		request: readv0.ContainerImageRequest{
+			IntegerFetcher: model.IntegerFetcher{
+				Id: 999,
+			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath) + "/999",
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/999",
 		method:         http.MethodGet,
 		expectedStatus: http.StatusNotFound,
 	},
 	{
 		name:           "success: ensure empty versions returns",
-		request:        modelsv0.VersionRequestList{},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath),
+		request:        listv0.VersionRequest{},
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
 		method:         http.MethodGet,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name:           "success: ensure empty container images returns",
-		request:        modelsv0.ContainerImageRequestList{},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath),
+		request:        listv0.ContainerImageRequest{},
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath),
 		method:         http.MethodGet,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name: "success: ensure version is created successfully without container images",
-		request: modelsv0.VersionRequestBody{
-			VersionBase: modelsv0.VersionBase{
+		request: createv0.VersionBody{
+			VersionBase: modelv0.VersionBase{
 				Id: pointers.FromString("v0.1.2"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath),
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name: "fail: ensure version uniquness",
-		request: modelsv0.VersionRequestBody{
-			VersionBase: modelsv0.VersionBase{
+		request: createv0.VersionBody{
+			VersionBase: modelv0.VersionBase{
 				Id: pointers.FromString("v0.1.2"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath),
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
 		expectedStatus: http.StatusInternalServerError,
 	},
 	{
 		name: "success: ensure version is created successfully with container images",
-		request: modelsv0.VersionRequestBody{
-			VersionBase: modelsv0.VersionBase{
+		request: createv0.VersionBody{
+			VersionBase: modelv0.VersionBase{
 				Id: pointers.FromString("v0.1.3"),
 			},
-			ContainerImages: []*modelsv0.ContainerImageRequestBody{
+			ContainerImages: []*createv0.ContainerImageBody{
 				{
-					ContainerImageBase: modelsv0.ContainerImageBase{
+					ContainerImageBase: modelv0.ContainerImageBase{
 						Image:      pointers.FromString("postgres"),
 						SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 						CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
@@ -175,66 +184,76 @@ var httpTests = []struct {
 				},
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath),
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name: "success: container image exists",
-		request: modelsv0.ContainerImageRequestGet{
-			Id: 1,
+		request: readv0.ContainerImageRequest{
+			IntegerFetcher: model.IntegerFetcher{
+				Id: 1,
+			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath) + "/1",
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/1",
 		method:         http.MethodGet,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name: "fail: unauthorized version request (delete)",
-		request: modelsv0.VersionRequestDelete{
-			Id: "v0.1.3",
+		request: deletev0.VersionRequest{
+			StringFetcher: model.StringFetcher{
+				Id: "v0.1.3",
+			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath) + "/v0.1.3",
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath) + "/v0.1.3",
 		method:         http.MethodDelete,
 		expectedStatus: http.StatusUnauthorized,
 	},
 	{
 		name: "fail: unauthorized container image request (delete)",
-		request: modelsv0.ContainerImageRequestDelete{
-			Id: 1,
+		request: deletev0.ContainerImageRequest{
+			IntegerFetcher: model.IntegerFetcher{
+				Id: 1,
+			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath) + "/1",
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/1",
 		method:         http.MethodDelete,
 		expectedStatus: http.StatusUnauthorized,
 	},
 	{
 		name: "success: ensure version is deleted successfully",
-		request: modelsv0.VersionRequestDelete{
-			Id: "v0.1.3",
+		request: deletev0.VersionRequest{
+			StringFetcher: model.StringFetcher{
+				Id: "v0.1.3",
+			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath) + "/v0.1.3",
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath) + "/v0.1.3",
 		method:         http.MethodDelete,
 		headers:        authHeader,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name: "success: container image still exists",
-		request: modelsv0.ContainerImageRequestGet{
-			Id: 1,
+		request: readv0.ContainerImageRequest{
+			IntegerFetcher: model.IntegerFetcher{
+				Id: 1,
+			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath) + "/1",
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/1",
 		method:         http.MethodGet,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name: "success: create version with linked existing container image",
-		request: modelsv0.VersionRequestBody{
-			VersionBase: modelsv0.VersionBase{
+		request: createv0.VersionBody{
+			VersionBase: modelv0.VersionBase{
 				Id: pointers.FromString("v0.1.3"),
 			},
-			ContainerImages: []*modelsv0.ContainerImageRequestBody{
+			ContainerImages: []*createv0.ContainerImageBody{
 				{
-					ContainerImageBase: modelsv0.ContainerImageBase{
+					ContainerImageBase: modelv0.ContainerImageBase{
 						Image:      pointers.FromString("postgres"),
 						SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 						CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
@@ -242,20 +261,20 @@ var httpTests = []struct {
 				},
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath),
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name: "success: create version with mismatched existing container image",
-		request: modelsv0.VersionRequestBody{
-			VersionBase: modelsv0.VersionBase{
+		request: createv0.VersionBody{
+			VersionBase: modelv0.VersionBase{
 				Id: pointers.FromString("v0.1.4"),
 			},
-			ContainerImages: []*modelsv0.ContainerImageRequestBody{
+			ContainerImages: []*createv0.ContainerImageBody{
 				{
-					ContainerImageBase: modelsv0.ContainerImageBase{
+					ContainerImageBase: modelv0.ContainerImageBase{
 						Image:      pointers.FromString("postgres"),
 						SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429e"),
 						CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8e"),
@@ -263,45 +282,47 @@ var httpTests = []struct {
 				},
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultVersionsPath),
+		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
 		expectedStatus: http.StatusInternalServerError,
 	},
 	{
 		name: "success: create new container image",
-		request: modelsv0.ContainerImageRequestBody{
-			ContainerImageBase: modelsv0.ContainerImageBase{
+		request: createv0.ContainerImageBody{
+			ContainerImageBase: modelv0.ContainerImageBase{
 				Image:      pointers.FromString("postgres2"),
 				SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 				CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath),
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
 		expectedStatus: http.StatusOK,
 	},
 	{
 		name: "fail: create existing container image",
-		request: modelsv0.ContainerImageRequestBody{
-			ContainerImageBase: modelsv0.ContainerImageBase{
+		request: createv0.ContainerImageBody{
+			ContainerImageBase: modelv0.ContainerImageBase{
 				Image:      pointers.FromString("postgres"),
 				SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 				CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
 			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath),
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath),
 		method:         http.MethodPost,
 		headers:        authHeader,
 		expectedStatus: http.StatusInternalServerError,
 	},
 	{
 		name: "success: delete container image",
-		request: modelsv0.ContainerImageRequestDelete{
-			Id: 1,
+		request: deletev0.ContainerImageRequest{
+			IntegerFetcher: model.IntegerFetcher{
+				Id: 1,
+			},
 		},
-		httpPath:       v0.PathFor(routes.DefaultContainerImagesPath) + "/1",
+		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/1",
 		method:         http.MethodDelete,
 		headers:        authHeader,
 		expectedStatus: http.StatusOK,

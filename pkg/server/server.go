@@ -5,14 +5,12 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
 
-	"github.com/klearwave/service-info/pkg/api/v0/models"
-	"github.com/klearwave/service-info/pkg/api/v0/routes"
-	"github.com/klearwave/service-info/pkg/api/v0/service"
-	servicev0 "github.com/klearwave/service-info/pkg/api/v0/service"
+	"github.com/klearwave/service-info/pkg/api"
+	"github.com/klearwave/service-info/pkg/api/model/unversioned/route"
+	routev0 "github.com/klearwave/service-info/pkg/api/model/v0/route"
+	"github.com/klearwave/service-info/pkg/api/service"
 	"github.com/klearwave/service-info/pkg/db"
 )
-
-var version string = "unstable"
 
 // server is a struct that represents a running server instance and parameters
 // required to run a server instance.
@@ -22,7 +20,7 @@ type server struct {
 	Database *db.Database
 
 	// services
-	ServiceV0 *servicev0.Service
+	Service *service.Service
 }
 
 // NewServer returns a new instance of a server.  It returns an error if the
@@ -30,7 +28,7 @@ type server struct {
 func NewServer(connection *db.Connection) (*server, error) {
 	s := &server{Router: gin.Default()}
 
-	config := huma.DefaultConfig("Information API", version)
+	config := huma.DefaultConfig("Information API", api.ServerVersion)
 	config.DocsPath = "/api/v0/docs"
 
 	s.API = humagin.New(s.Router, config)
@@ -40,26 +38,27 @@ func NewServer(connection *db.Connection) (*server, error) {
 		return nil, err
 	}
 	s.Database = db
-	s.ServiceV0 = service.NewService(db)
+	s.Service = service.NewService(db)
 
 	return s, nil
 }
 
 // RegisterRoutes registers all routes associated with a server instance.
 func (s *server) RegisterRoutes() {
+	// unversioned routes
+	huma.Register(s.API, route.GetAbout(), s.Service.GetAbout)
+
 	// version routes v0
-	version := models.Version{}
-	huma.Register(s.API, routes.CreateVersion(&version), s.ServiceV0.CreateVersion)
-	huma.Register(s.API, routes.GetVersion(&version), s.ServiceV0.GetVersion)
-	huma.Register(s.API, routes.GetVersions(&version), s.ServiceV0.GetVersions)
-	huma.Register(s.API, routes.DeleteVersion(&version), s.ServiceV0.DeleteVersion)
-	huma.Register(s.API, routes.GetVersionContainerImages(&version), s.ServiceV0.GetVersionContainerImages)
+	huma.Register(s.API, routev0.CreateVersion(), s.Service.CreateVersionV0)
+	huma.Register(s.API, routev0.GetVersion(), s.Service.GetVersionV0)
+	huma.Register(s.API, routev0.ListVersions(), s.Service.ListVersionsV0)
+	huma.Register(s.API, routev0.ListVersionContainerImages(), s.Service.ListVersionContainerImagesV0)
+	huma.Register(s.API, routev0.DeleteVersion(), s.Service.DeleteVersionV0)
 
 	// container image routes v0
-	containerImage := models.ContainerImage{}
-	huma.Register(s.API, routes.CreateContainerImage(&containerImage), s.ServiceV0.CreateContainerImage)
-	huma.Register(s.API, routes.GetContainerImage(&containerImage), s.ServiceV0.GetContainerImage)
-	huma.Register(s.API, routes.GetContainerImages(&containerImage), s.ServiceV0.GetContainerImages)
-	huma.Register(s.API, routes.DeleteContainerImage(&containerImage), s.ServiceV0.DeleteContainerImage)
-	huma.Register(s.API, routes.GetContainerImageVersions(&containerImage), s.ServiceV0.GetContainerImageVersions)
+	huma.Register(s.API, routev0.CreateContainerImage(), s.Service.CreateContainerImageV0)
+	huma.Register(s.API, routev0.GetContainerImage(), s.Service.GetContainerImageV0)
+	huma.Register(s.API, routev0.ListContainerImages(), s.Service.ListContainerImagesV0)
+	huma.Register(s.API, routev0.ListContainerImageVersions(), s.Service.ListContainerImageVersionsV0)
+	huma.Register(s.API, routev0.DeleteContainerImage(), s.Service.DeleteContainerImageV0)
 }
