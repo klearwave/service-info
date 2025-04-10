@@ -14,7 +14,7 @@ builds:
     main: "./pkg/cmd"
     binary: "service"
     ldflags:
-      - "-s -w -X github.com/klearwave/service-info/pkg/models.AuthPassword={{ .Env.GITHUB_TOKEN }} -extldflags '-static'"
+      - "-s -w -X github.com/klearwave/service-info/internal/pkg/models.AuthPassword={{ .Env.GITHUB_TOKEN }} -extldflags '-static'"
 
 archives:
   - name_template: >-
