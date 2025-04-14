@@ -330,7 +330,7 @@ var httpTests = []struct {
 }
 
 func TestE2E(t *testing.T) {
-	connection := &db.Connection{
+	connection := &db.Config{
 		Host:         "localhost",
 		Port:         5432,
 		Username:     "postgres",
@@ -360,11 +360,15 @@ func TestE2E(t *testing.T) {
 	serverURL := "http://localhost:8888"
 
 	if os.Getenv("E2E_EMBEDDED") == "true" {
-		s, err := server.NewServer(connection)
+		s, err := server.NewServer()
 		if err != nil {
 			t.Fatal(err)
 		}
 		s.RegisterRoutes()
+
+		if err := s.Init(connection); err != nil {
+			t.Fatal(err)
+		}
 
 		server := httptest.NewServer(s.Router)
 		serverURL = server.URL
@@ -417,7 +421,7 @@ func TestE2E(t *testing.T) {
 }
 
 // connect makes a database connection.
-func connect(t *testing.T, connection *db.Connection) *sqlx.DB {
+func connect(t *testing.T, connection *db.Config) *sqlx.DB {
 	db, err := sqlx.Connect("postgres", connection.String)
 	if err != nil {
 		t.Fatal(err)
@@ -428,7 +432,7 @@ func connect(t *testing.T, connection *db.Connection) *sqlx.DB {
 
 // migrate runs database migrations.  This is to be used prior to executing any tests
 // and ensures our migrations run correctly.
-func migrate(t *testing.T, connection *db.Connection) {
+func migrate(t *testing.T, connection *db.Config) {
 	db := connect(t, connection)
 
 	_, filename, _, ok := runtime.Caller(0)

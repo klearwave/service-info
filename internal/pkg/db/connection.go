@@ -24,8 +24,8 @@ const (
 	envDatabasePassword = "DB_PASSWORD"
 )
 
-// Connection represents an object which contains the database connection parameters.
-type Connection struct {
+// Config represents an object which contains the database connection parameters.
+type Config struct {
 	Host         string
 	Port         int
 	DatabaseName string
@@ -37,7 +37,7 @@ type Connection struct {
 
 // Parse parses a connection object into a database string.  It uses environment variables
 // if it cannot find parameters on the object.
-func (connection *Connection) Parse() error {
+func (connection *Config) Parse() error {
 	if connection.Port == 0 {
 		if os.Getenv(envDatabasePort) != "" {
 			port, err := strconv.Atoi(os.Getenv(envDatabasePort))

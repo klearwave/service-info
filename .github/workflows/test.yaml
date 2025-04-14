@@ -100,8 +100,16 @@ jobs:
           push: false
           tags: "${{ env.IMAGE }}:${{ github.ref_name }},${{ env.IMAGE }}:unstable"
 
-      - name: Run E2E Tests
+      - name: Run Service E2E Tests
         run: |
           make up-daemon
           sleep 20
+
+          # http tests
           make test-e2e
+
+          # cli tests
+          make build
+          bin/service version
+          bin/service generate
+          bin/service health --tls=false --port=8888

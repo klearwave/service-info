@@ -28,18 +28,17 @@ services:
   #
   migrations:
     container_name: migrations
-    entrypoint:
-      - "/bin/goose"
-      - "up"
     image: ghcr.io/klearwave/service-info:unstable
+    entrypoint:
+      - "/bin/service"
+      - "migrate"
+      - "up"
+      - "--directory=/migrations"
+      - "--db-host=db"
     restart: no
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      GOOSE_DRIVER: postgres
-      GOOSE_MIGRATION_DIR: /migrations
-      GOOSE_DBSTRING: postgres://postgres:postgres@db:5432/postgres
     links:
       - db
 
@@ -48,9 +47,10 @@ services:
   #
   api:
     container_name: api
-    entrypoint:
-      - service
     image: ghcr.io/klearwave/service-info:unstable
+    entrypoint:
+      - "/bin/service"
+      - "run"
     restart: always
     depends_on:
       - db
@@ -65,3 +65,14 @@ services:
       DB_NAME: postgres
     links:
       - db
+    healthcheck:
+      test:
+        - "CMD"
+        - "/bin/service"
+        - "health"
+        - "--port=8888"
+        - "--tls=false"
+      interval: 120s
+      retries: 3
+      start_period: 10s
+      timeout: 5s

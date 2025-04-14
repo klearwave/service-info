@@ -13,13 +13,11 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY pkg/ pkg/
+COPY internal/pkg/ internal/pkg/
 COPY migrations/ migrations/
 
-RUN CGO_ENABLED=0 go build -o /src/service ./pkg/cmd && \
+RUN CGO_ENABLED=0 go build -o /src/service ./internal/pkg/cmd && \
         chmod +x /src/service
-RUN export GOBIN=/src && go install github.com/pressly/goose/v3/cmd/goose@v3.24.1 && \
-        chmod +x /src/goose
 
 #
 # runtime image
@@ -28,5 +26,5 @@ FROM gcr.io/distroless/static:nonroot AS runtime
 USER 65532:65532
 COPY --from=build /src/migrations /migrations
 COPY --from=build /src/service /bin/service
-COPY --from=build /src/goose /bin/goose
-ENTRYPOINT ["service"]
+ENTRYPOINT [ "/bin/service" ]
+CMD ["run"]

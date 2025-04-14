@@ -13,25 +13,51 @@ const (
 	MissingDatabaseID int = 0
 )
 
+// Database represents a connection to a backend database.
 type Database struct {
 	Lock       *sync.Mutex
+	Config     *Config
 	Connection *gorm.DB
 }
 
-func NewDatabase(connection *Connection) (*Database, error) {
-	if err := connection.Parse(); err != nil {
+// NewDatabase creates a new instance of a database object.
+func NewDatabase(config *Config) (*Database, error) {
+	if err := config.Parse(); err != nil {
 		return nil, fmt.Errorf("unable to parse database connection; %w", err)
 	}
 
-	db, err := gorm.Open(postgres.Open(connection.String))
+	return &Database{
+		Lock:   &sync.Mutex{},
+		Config: config,
+	}, nil
+}
+
+// Open opens the connection to the database.
+func (database *Database) Open() error {
+	db, err := gorm.Open(postgres.Open(database.Config.String))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &Database{
-		Lock:       &sync.Mutex{},
-		Connection: db,
-	}, nil
+	database.Connection = db
+
+	// wait up to 30 seconds for the connection to open
+	err = database.Wait(30)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// Close closes the connection to the database.
+func (database *Database) Close() error {
+	connection, err := database.Connection.DB()
+	if err != nil {
+		return err
+	}
+
+	return connection.Close()
 }
 
 // Read is a generic function to read a model

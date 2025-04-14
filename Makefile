@@ -21,6 +21,17 @@ image-scan:
 		--exit-code 1 \
 		--no-progress $(IMAGE):$(IMAGE_VERSION) || true
 
+.PHONY: client
+client:
+	docker run --rm -v \
+		`pwd`:/local openapitools/openapi-generator-cli \
+			generate -i /local/openapi.yaml \
+			-g go \
+			-o /local/client
+
+build:
+	go build -o bin/service ./internal/pkg/cmd
+
 #
 # testing
 #

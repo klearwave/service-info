@@ -17,10 +17,20 @@ type Service struct {
 	Database *db.Database
 }
 
-func NewService(database *db.Database) *Service {
-	return &Service{
-		Database: database,
-	}
+func NewService() *Service {
+	return &Service{}
+}
+
+// Start starts the web service.
+func (service *Service) Start(database *db.Database) error {
+	service.Database = database
+
+	return service.Database.Open()
+}
+
+// Stop stops the web service.
+func (service *Service) Stop() error {
+	return service.Database.Close()
 }
 
 // Create handles the creation of a new resource in the database for a web service.
