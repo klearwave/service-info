@@ -45,7 +45,7 @@ down:
 	docker compose down
 
 test-unit:
-	go test ./pkg/...
+	go test ./internal/pkg/...
 
 # e2e test with embedded db/http server
 test-e2e-embedded:
