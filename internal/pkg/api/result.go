@@ -12,7 +12,7 @@ import (
 // Result represents the result of a service operation.
 type Result struct {
 	Error  huma.StatusError
-	Object interface{}
+	Object any
 	Status int
 }
 
@@ -23,7 +23,7 @@ func (r *Result) SetError(status int, msg string, err error) {
 }
 
 // NotFoundError sets the error when a record is not found.
-func (r *Result) NotFoundError(err error, id, model interface{}) {
+func (r *Result) NotFoundError(err error, id, model any) {
 	r.SetError(
 		http.StatusNotFound,
 		fmt.Sprintf("unable to find %T with id: [%v]", model, id),

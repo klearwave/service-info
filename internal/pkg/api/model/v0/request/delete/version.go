@@ -14,7 +14,7 @@ type VersionRequest struct {
 
 // IsAuthorized checks if the request is authorized.  It is used to satisfy the Request.
 func (req VersionRequest) IsAuthorized() (bool, error) {
-	return req.Authorization.Authorized()
+	return req.Authorized()
 }
 
 // IsValid checks if the request is valid.  It is used to satisfy the Reader interface.
@@ -27,7 +27,7 @@ func (req VersionRequest) IsValid() (bool, error) {
 func (req VersionRequest) ToDeleter() api.Deleter {
 	return &v0.Version{
 		VersionBase: v0.VersionBase{
-			Id: &req.Id,
+			ID: &req.ID,
 		},
 	}
 }

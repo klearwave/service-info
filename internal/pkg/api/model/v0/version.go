@@ -21,7 +21,7 @@ const (
 
 // VersionBase is the base set of fields for all Version objects.
 type VersionBase struct {
-	Id *string `json:"id,omitempty" gorm:"primarykey" example:"v0.1.2" doc:"Version in semantic versioning format."`
+	ID *string `doc:"Version in semantic versioning format." example:"v0.1.2" gorm:"primarykey" json:"id,omitempty"`
 }
 
 // Version represents the full database schema for a Version.  The full schema is also used in responses.
@@ -29,20 +29,20 @@ type Version struct {
 	model.Model
 	VersionBase
 
-	Stable *bool `json:"stable,omitempty" example:"false" doc:"Whether this is a stable version."`
+	Stable *bool `doc:"Whether this is a stable version." example:"false" json:"stable,omitempty"`
 
-	XVersion     *int    `json:"x_version,omitempty" example:"0" doc:"The X version of this release (e.g. 0; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
-	YVersion     *int    `json:"y_version,omitempty" example:"1" doc:"The Y version of this release (e.g. 1; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
-	ZVersion     *int    `json:"z_version,omitempty" example:"2" doc:"The Z version of this release (e.g. 2; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
-	BuildVersion *string `json:"build_version,omitempty" example:"prerelease.1" doc:"The build version and metadata of this release (e.g. prerelease.1; v0.1.2-prerelease.1 == x.y.z-build.metadata)."`
+	XVersion     *int    `doc:"The X version of this release (e.g. 0; v0.1.2-prerelease.1 == x.y.z-build.metadata)."                             example:"0"            json:"x_version,omitempty"`
+	YVersion     *int    `doc:"The Y version of this release (e.g. 1; v0.1.2-prerelease.1 == x.y.z-build.metadata)."                             example:"1"            json:"y_version,omitempty"`
+	ZVersion     *int    `doc:"The Z version of this release (e.g. 2; v0.1.2-prerelease.1 == x.y.z-build.metadata)."                             example:"2"            json:"z_version,omitempty"`
+	BuildVersion *string `doc:"The build version and metadata of this release (e.g. prerelease.1; v0.1.2-prerelease.1 == x.y.z-build.metadata)." example:"prerelease.1" json:"build_version,omitempty"`
 
-	ContainerImages []*ContainerImage `json:"container_images,omitempty" gorm:"many2many:version_container_images;" doc:"Container images associated with this version."`
+	ContainerImages []*ContainerImage `doc:"Container images associated with this version." gorm:"many2many:version_container_images;" json:"container_images,omitempty"`
 }
 
 // BeforeCreate defines the before create logic for a specific version.  The BeforeCreate
 // is used in conjunction with GORM as a trigger function that is called before
 // inserting a record into the database.
-func (version *Version) BeforeCreate(tx *gorm.DB) error {
+func (version *Version) BeforeCreate(_ *gorm.DB) error {
 	// set the x, y and z versions for the version
 	if err := version.Parse(); err != nil {
 		return fmt.Errorf("%s; %w", apierrors.ErrInvalidVersion, err)
@@ -65,13 +65,13 @@ func (version *Version) Read(database *db.Database) *api.Result {
 	}()
 
 	// query the database and return any errors
-	databaseResult := database.Connection.Where(map[string]interface{}{"id": *version.Id}).
+	databaseResult := database.Connection.Where(map[string]any{"id": *version.ID}).
 		Preload("ContainerImages").
 		First(version)
 
 	if databaseResult.Error != nil {
 		if errors.Is(databaseResult.Error, gorm.ErrRecordNotFound) {
-			apiResult.NotFoundError(nil, *version.Id, version)
+			apiResult.NotFoundError(nil, *version.ID, version)
 
 			return apiResult
 		}
@@ -81,8 +81,8 @@ func (version *Version) Read(database *db.Database) *api.Result {
 		return apiResult
 	}
 
-	if version.Id == nil || *version.Id == "" {
-		apiResult.NotFoundError(nil, *version.Id, version)
+	if version.ID == nil || *version.ID == "" {
+		apiResult.NotFoundError(nil, *version.ID, version)
 
 		return apiResult
 	}
@@ -113,26 +113,27 @@ func (versions *Versions) List(database *db.Database) *api.Result {
 
 // Delete handles the delete request for a version model.
 func (version *Version) Delete(database *db.Database) *api.Result {
-	return api.Delete(database, *version.Id, version)
+	return api.Delete(database, *version.ID, version)
 }
 
 // Parse sets the major, minor, bugfix and build versions for a specific version.  It also
 // performs some basic mutations and validations againt the set version.
 func (version *Version) Parse() error {
-	versionId := *version.Id
+	versionID := *version.ID
 
 	// add 'v' prefix if missing
-	if versionId[0] != 'v' {
-		version.Id = pointers.FromString("v" + versionId)
+	if versionID[0] != 'v' {
+		version.ID = pointers.FromString("v" + versionID)
 	}
 
 	// regular expression for semantic versioning with optional 'v' prefix
-	matches := regexp.MustCompile(VersionRegex).FindStringSubmatch(versionId)
+	matches := regexp.MustCompile(VersionRegex).FindStringSubmatch(versionID)
 	if matches == nil {
-		return fmt.Errorf("version not in semantic versioning format: %s", versionId)
+		return fmt.Errorf("version not in semantic versioning format: %s", versionID)
 	}
 
 	// extract major, minor, patch and build versions
+	//nolint:mnd // a semantic version has exactly 3 parts so we can hard-code this
 	subVersions := make([]int, 3)
 
 	for i := range []int{0, 1, 2} {

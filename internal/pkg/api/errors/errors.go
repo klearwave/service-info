@@ -7,9 +7,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 )
 
-var (
-	ErrMissingParameterId = errors.New("missing required id parameter")
-)
+var ErrMissingParameterID = errors.New("missing required id parameter")
 
 // APIErrorFor is a helper function to return an error from a status code.
 func APIErrorFor(statusCode int, msg string, err error) huma.StatusError {

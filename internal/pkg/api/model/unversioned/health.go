@@ -17,7 +17,7 @@ type Health struct {
 }
 
 // Read handles the read request for an about model.
-func (health *Health) Read(database *db.Database) *api.Result {
+func (health *Health) Read(_ *db.Database) *api.Result {
 	return &api.Result{
 		Object: health,
 		Error:  nil,

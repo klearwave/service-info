@@ -19,7 +19,7 @@ type Request interface {
 // CreateRequest is an interface that represents a request object to be used by a service create operations.
 type CreateRequest interface {
 	Request
-	ToCreater() Creater
+	ToCreator() Creator
 }
 
 // ReadRequest is an interface that represents a request object to be used by a service read operations.
@@ -47,7 +47,7 @@ type ListRequest interface {
 }
 
 // Create runs the logic to execute a Create request against a database and return the result.
-func Create(database *db.Database, model interface{}) *Result {
+func Create(database *db.Database, model any) *Result {
 	apiResult := &Result{}
 
 	defer func() {
@@ -65,7 +65,7 @@ func Create(database *db.Database, model interface{}) *Result {
 }
 
 // Delete runs the logic to execute a Delete request against a database and return the result.
-func Delete(database *db.Database, id, model interface{}) *Result {
+func Delete(database *db.Database, id, model any) *Result {
 	apiResult := &Result{}
 
 	defer func() {

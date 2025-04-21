@@ -44,17 +44,21 @@ up-daemon:
 down:
 	docker compose down
 
+lint:
+	golangci-lint run \
+		--config .golangci.yaml
+
 test-unit:
 	go test ./internal/pkg/...
 
 # e2e test with embedded db/http server
 test-e2e-embedded:
 	export E2E_EMBEDDED=true && \
-		go test ./test -run ^TestE2E$
+		go test ./test/e2e -run ^TestE2E$
 
 # e2e test against active db/http server
 test-e2e:
-	go test ./test -run ^TestE2E$
+	go test ./test/e2e -run ^TestE2E$
 
 #
 # test infra

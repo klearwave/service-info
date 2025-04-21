@@ -2,9 +2,10 @@ package migrate
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 
+	// this is used to create the goose command without having to import all of the unnecessary libs.
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/spf13/cobra"
@@ -38,17 +39,16 @@ func NewCommand() *cobra.Command {
 	command.Flags().StringVarP(&commandInput.Directory, "directory", "d", "./migrations", "directory with migration files")
 	command.Flags().StringVarP(&commandInput.Connection.DatabaseName, "db-name", "n", "postgres", "Database name to perform migrations against")
 	command.Flags().StringVar(&commandInput.Connection.Host, "db-host", "localhost", "Database host where migration database resides")
-	command.Flags().IntVar(&commandInput.Connection.Port, "db-port", 5432, "Port which database is running on")
+	command.Flags().IntVar(&commandInput.Connection.Port, "db-port", db.DefaultDatabasePort, "Port which database is running on")
 	command.Flags().StringVarP(&commandInput.Connection.Username, "db-username", "u", "postgres", "Username which has access to the database")
 	command.Flags().StringVarP(&commandInput.Connection.Password, "db-password", "p", "postgres", "Password of user which was access to the database")
 
 	return command
 }
 
-//nolint:forbidigo
 func migrate(args []string, commandInput *input) error {
 	if len(args) < 1 {
-		return fmt.Errorf("goose: missing command")
+		return errors.New("goose: missing command")
 	}
 
 	command, connection := args[0], commandInput.Connection
@@ -57,16 +57,12 @@ func migrate(args []string, commandInput *input) error {
 		return err
 	}
 
-	db, err := goose.OpenDBWithDriver("postgres", connection.String)
+	database, err := goose.OpenDBWithDriver("postgres", connection.String)
 	if err != nil {
-		log.Fatalf("goose: failed to open DB: %v", err)
+		return fmt.Errorf("goose: failed to open DB: %v", err)
 	}
 
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Fatalf("goose: failed to close DB: %v", err)
-		}
-	}()
+	defer database.Close()
 
 	arguments := []string{}
 	if len(args) > 1 {
@@ -74,8 +70,8 @@ func migrate(args []string, commandInput *input) error {
 	}
 
 	ctx := context.Background()
-	if err := goose.RunContext(ctx, command, db, commandInput.Directory, arguments...); err != nil {
-		log.Fatalf("goose %v: %v", command, err)
+	if err := goose.RunContext(ctx, command, database, commandInput.Directory, arguments...); err != nil {
+		return fmt.Errorf("goose %v: %v", command, err)
 	}
 
 	return nil

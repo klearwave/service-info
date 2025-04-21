@@ -1,10 +1,11 @@
-package test
+package e2e_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -19,7 +20,6 @@ import (
 
 	"github.com/klearwave/service-info/internal/pkg/api"
 	"github.com/klearwave/service-info/internal/pkg/api/model"
-	modelv0 "github.com/klearwave/service-info/internal/pkg/api/model/v0"
 	v0 "github.com/klearwave/service-info/internal/pkg/api/model/v0"
 	createv0 "github.com/klearwave/service-info/internal/pkg/api/model/v0/request/create"
 	deletev0 "github.com/klearwave/service-info/internal/pkg/api/model/v0/request/delete"
@@ -29,6 +29,7 @@ import (
 	"github.com/klearwave/service-info/internal/pkg/db"
 	"github.com/klearwave/service-info/internal/pkg/server"
 	"github.com/klearwave/service-info/internal/pkg/utils/pointers"
+	"github.com/klearwave/service-info/internal/pkg/utils/types"
 )
 
 var authHeader = map[string]string{
@@ -39,8 +40,8 @@ var authHeader = map[string]string{
 // and are not parallelized.
 var httpTests = []struct {
 	name           string
-	request        interface{}            // request payload sent (to be converted to map[string]interface)
-	response       map[string]interface{} // expected response (if any)
+	request        any            // request payload sent (to be converted to map[string]interface)
+	response       map[string]any // expected response (if any)
 	headers        map[string]string
 	httpPath       string
 	method         string
@@ -49,8 +50,8 @@ var httpTests = []struct {
 	{
 		name: "fail: unauthorized version request (create)",
 		request: createv0.VersionBody{
-			VersionBase: modelv0.VersionBase{
-				Id: pointers.FromString("x.y.z"),
+			VersionBase: v0.VersionBase{
+				ID: pointers.FromString("x.y.z"),
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
@@ -60,7 +61,7 @@ var httpTests = []struct {
 	{
 		name: "fail: unauthorized container image request (create)",
 		request: createv0.ContainerImageBody{
-			ContainerImageBase: modelv0.ContainerImageBase{
+			ContainerImageBase: v0.ContainerImageBase{
 				Image:      pointers.FromString("postgres2"),
 				SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 				CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
@@ -73,8 +74,8 @@ var httpTests = []struct {
 	{
 		name: "fail: ensure invalid version",
 		request: createv0.VersionBody{
-			VersionBase: modelv0.VersionBase{
-				Id: pointers.FromString("x.y.z"),
+			VersionBase: v0.VersionBase{
+				ID: pointers.FromString("x.y.z"),
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
@@ -85,7 +86,7 @@ var httpTests = []struct {
 	{
 		name: "fail: ensure invalid container image (missing sha256sum)",
 		request: createv0.ContainerImageBody{
-			ContainerImageBase: modelv0.ContainerImageBase{
+			ContainerImageBase: v0.ContainerImageBase{
 				Image:      pointers.FromString("postgres"),
 				CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
 			},
@@ -98,7 +99,7 @@ var httpTests = []struct {
 	{
 		name: "fail: ensure invalid container image (missing commit hash)",
 		request: createv0.ContainerImageBody{
-			ContainerImageBase: modelv0.ContainerImageBase{
+			ContainerImageBase: v0.ContainerImageBase{
 				Image:     pointers.FromString("postgres"),
 				SHA256Sum: pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 			},
@@ -112,7 +113,7 @@ var httpTests = []struct {
 		name: "fail: ensure missing version is not found",
 		request: readv0.VersionRequest{
 			StringFetcher: model.StringFetcher{
-				Id: "v0.0.1",
+				ID: "v0.0.1",
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultVersionsPath) + "/v0.0.1",
@@ -123,7 +124,7 @@ var httpTests = []struct {
 		name: "fail: ensure missing container image is not found",
 		request: readv0.ContainerImageRequest{
 			IntegerFetcher: model.IntegerFetcher{
-				Id: 999,
+				ID: 999,
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/999",
@@ -147,8 +148,8 @@ var httpTests = []struct {
 	{
 		name: "success: ensure version is created successfully without container images",
 		request: createv0.VersionBody{
-			VersionBase: modelv0.VersionBase{
-				Id: pointers.FromString("v0.1.2"),
+			VersionBase: v0.VersionBase{
+				ID: pointers.FromString("v0.1.2"),
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
@@ -159,8 +160,8 @@ var httpTests = []struct {
 	{
 		name: "fail: ensure version uniquness",
 		request: createv0.VersionBody{
-			VersionBase: modelv0.VersionBase{
-				Id: pointers.FromString("v0.1.2"),
+			VersionBase: v0.VersionBase{
+				ID: pointers.FromString("v0.1.2"),
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultVersionsPath),
@@ -171,12 +172,12 @@ var httpTests = []struct {
 	{
 		name: "success: ensure version is created successfully with container images",
 		request: createv0.VersionBody{
-			VersionBase: modelv0.VersionBase{
-				Id: pointers.FromString("v0.1.3"),
+			VersionBase: v0.VersionBase{
+				ID: pointers.FromString("v0.1.3"),
 			},
 			ContainerImages: []*createv0.ContainerImageBody{
 				{
-					ContainerImageBase: modelv0.ContainerImageBase{
+					ContainerImageBase: v0.ContainerImageBase{
 						Image:      pointers.FromString("postgres"),
 						SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 						CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
@@ -193,7 +194,7 @@ var httpTests = []struct {
 		name: "success: container image exists",
 		request: readv0.ContainerImageRequest{
 			IntegerFetcher: model.IntegerFetcher{
-				Id: 1,
+				ID: 1,
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/1",
@@ -204,7 +205,7 @@ var httpTests = []struct {
 		name: "fail: unauthorized version request (delete)",
 		request: deletev0.VersionRequest{
 			StringFetcher: model.StringFetcher{
-				Id: "v0.1.3",
+				ID: "v0.1.3",
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultVersionsPath) + "/v0.1.3",
@@ -215,7 +216,7 @@ var httpTests = []struct {
 		name: "fail: unauthorized container image request (delete)",
 		request: deletev0.ContainerImageRequest{
 			IntegerFetcher: model.IntegerFetcher{
-				Id: 1,
+				ID: 1,
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/1",
@@ -226,7 +227,7 @@ var httpTests = []struct {
 		name: "success: ensure version is deleted successfully",
 		request: deletev0.VersionRequest{
 			StringFetcher: model.StringFetcher{
-				Id: "v0.1.3",
+				ID: "v0.1.3",
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultVersionsPath) + "/v0.1.3",
@@ -238,7 +239,7 @@ var httpTests = []struct {
 		name: "success: container image still exists",
 		request: readv0.ContainerImageRequest{
 			IntegerFetcher: model.IntegerFetcher{
-				Id: 1,
+				ID: 1,
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/1",
@@ -248,12 +249,12 @@ var httpTests = []struct {
 	{
 		name: "success: create version with linked existing container image",
 		request: createv0.VersionBody{
-			VersionBase: modelv0.VersionBase{
-				Id: pointers.FromString("v0.1.3"),
+			VersionBase: v0.VersionBase{
+				ID: pointers.FromString("v0.1.3"),
 			},
 			ContainerImages: []*createv0.ContainerImageBody{
 				{
-					ContainerImageBase: modelv0.ContainerImageBase{
+					ContainerImageBase: v0.ContainerImageBase{
 						Image:      pointers.FromString("postgres"),
 						SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 						CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
@@ -269,12 +270,12 @@ var httpTests = []struct {
 	{
 		name: "success: create version with mismatched existing container image",
 		request: createv0.VersionBody{
-			VersionBase: modelv0.VersionBase{
-				Id: pointers.FromString("v0.1.4"),
+			VersionBase: v0.VersionBase{
+				ID: pointers.FromString("v0.1.4"),
 			},
 			ContainerImages: []*createv0.ContainerImageBody{
 				{
-					ContainerImageBase: modelv0.ContainerImageBase{
+					ContainerImageBase: v0.ContainerImageBase{
 						Image:      pointers.FromString("postgres"),
 						SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429e"),
 						CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8e"),
@@ -290,7 +291,7 @@ var httpTests = []struct {
 	{
 		name: "success: create new container image",
 		request: createv0.ContainerImageBody{
-			ContainerImageBase: modelv0.ContainerImageBase{
+			ContainerImageBase: v0.ContainerImageBase{
 				Image:      pointers.FromString("postgres2"),
 				SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 				CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
@@ -304,7 +305,7 @@ var httpTests = []struct {
 	{
 		name: "fail: create existing container image",
 		request: createv0.ContainerImageBody{
-			ContainerImageBase: modelv0.ContainerImageBase{
+			ContainerImageBase: v0.ContainerImageBase{
 				Image:      pointers.FromString("postgres"),
 				SHA256Sum:  pointers.FromString("2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d"),
 				CommitHash: pointers.FromString("631af50a8bbc4b5e69dab77d51a3a1733550fe8d"),
@@ -319,7 +320,7 @@ var httpTests = []struct {
 		name: "success: delete container image",
 		request: deletev0.ContainerImageRequest{
 			IntegerFetcher: model.IntegerFetcher{
-				Id: 1,
+				ID: 1,
 			},
 		},
 		httpPath:       v0.PathFor(routev0.DefaultContainerImagesPath) + "/1",
@@ -329,6 +330,7 @@ var httpTests = []struct {
 	},
 }
 
+//nolint:paralleltest // we require this to run non-parallel because our tests are sequential, dependent on prior tests
 func TestE2E(t *testing.T) {
 	connection := &db.Config{
 		Host:         "localhost",
@@ -339,7 +341,7 @@ func TestE2E(t *testing.T) {
 	}
 
 	// create the embedded postgres database for testing if requested
-	if os.Getenv("E2E_EMBEDDED") == "true" {
+	if types.ToBoolean(os.Getenv("E2E_EMBEDDED")) {
 		database := embeddedpostgres.NewDatabase()
 		if err := database.Start(); err != nil {
 			t.Fatal(err)
@@ -359,24 +361,25 @@ func TestE2E(t *testing.T) {
 	// create the in memory http server for testing if requested
 	serverURL := "http://localhost:8888"
 
-	if os.Getenv("E2E_EMBEDDED") == "true" {
+	if types.ToBoolean(os.Getenv("E2E_EMBEDDED")) {
 		s, err := server.NewServer()
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		s.RegisterRoutes()
 
 		if err := s.Init(connection); err != nil {
 			t.Fatal(err)
 		}
 
-		server := httptest.NewServer(s.Router)
-		serverURL = server.URL
-		defer server.Close()
+		srv := httptest.NewServer(s.Router)
+		serverURL = srv.URL
+		defer srv.Close()
 	}
 
 	// run migrations first if requested
-	if os.Getenv("E2E_EMBEDDED") == "true" {
+	if types.ToBoolean(os.Getenv("E2E_EMBEDDED")) {
 		migrate(t, connection)
 	}
 
@@ -384,7 +387,6 @@ func TestE2E(t *testing.T) {
 
 	// run individual tests next
 	for _, tc := range httpTests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			// NO t.Parallel() — ensures ordered execution
 			body, err := json.Marshal(tc.request)
@@ -394,13 +396,14 @@ func TestE2E(t *testing.T) {
 
 			httpPath := serverURL + tc.httpPath
 
-			req, err := http.NewRequest(tc.method, serverURL+tc.httpPath, bytes.NewBuffer(body))
+			req, err := http.NewRequestWithContext(context.Background(), tc.method, serverURL+tc.httpPath, bytes.NewBuffer(body))
 			if err != nil {
 				t.Fatalf("Failed to create request: %v", err)
 			}
 
 			// set headers
 			req.Header.Set("Content-Type", "application/json")
+
 			if tc.headers != nil {
 				for k, v := range tc.headers {
 					req.Header.Set(k, v)
@@ -422,27 +425,27 @@ func TestE2E(t *testing.T) {
 
 // connect makes a database connection.
 func connect(t *testing.T, connection *db.Config) *sqlx.DB {
-	db, err := sqlx.Connect("postgres", connection.String)
+	database, err := sqlx.Connect("postgres", connection.String)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return db
+	return database
 }
 
 // migrate runs database migrations.  This is to be used prior to executing any tests
 // and ensures our migrations run correctly.
 func migrate(t *testing.T, connection *db.Config) {
-	db := connect(t, connection)
+	database := connect(t, connection)
 
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
-		t.Fatal(fmt.Errorf("unable to get caller information"))
+		t.Fatal(errors.New("unable to get caller information"))
 	}
 
 	baseDir := filepath.Dir(filename)
 
-	if err := goose.Up(db.DB, filepath.Join(baseDir, "../migrations")); err != nil {
+	if err := goose.Up(database.DB, filepath.Join(baseDir, "..", "..", "migrations")); err != nil {
 		t.Fatal(err)
 	}
 }

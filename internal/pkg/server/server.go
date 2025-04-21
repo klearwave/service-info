@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
@@ -24,6 +26,9 @@ const (
 
 	tlsCertPath = "/tls.crt"
 	tlsKeyPath  = "/tls.key"
+
+	DefaultReadHeaderTimeoutSeconds = 15
+	DefaultShutdownTimeoutSeconds   = 10
 )
 
 // server is a struct that represents a running server instance and parameters
@@ -61,8 +66,9 @@ func NewServer() (*server, error) {
 
 	// create the server
 	s.Server = &http.Server{
-		Addr:    fmt.Sprintf("0.0.0.0:%d", port),
-		Handler: s.Router,
+		Addr:              fmt.Sprintf("0.0.0.0:%d", port),
+		Handler:           s.Router,
+		ReadHeaderTimeout: DefaultReadHeaderTimeoutSeconds * time.Second,
 	}
 
 	return s, nil
@@ -71,20 +77,20 @@ func NewServer() (*server, error) {
 // Init initializes the server.
 func (s *server) Init(config *db.Config) error {
 	// create and validate the database config
-	db, err := db.NewDatabase(config)
+	database, err := db.NewDatabase(config)
 	if err != nil {
 		return err
 	}
 
 	// start the web service
-	return s.Service.Start(db)
+	return s.Service.Start(database)
 }
 
 // Start starts the server.
 func (s *server) Start() error {
 	// ensure the server is initialized
 	if s.Service.Database == nil {
-		return fmt.Errorf("service not initialized; missing database configuration")
+		return errors.New("service not initialized; missing database configuration")
 	}
 
 	var err error
@@ -99,7 +105,7 @@ func (s *server) Start() error {
 		}
 
 		if err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+			err = fmt.Errorf("server error: %w", err)
 		}
 	}()
 
@@ -109,6 +115,7 @@ func (s *server) Start() error {
 // Stop stops the server.
 func (s *server) Stop(ctx context.Context) error {
 	log.Println("Shutting down server...")
+
 	if err := s.Server.Shutdown(ctx); err != nil {
 		return fmt.Errorf("shutdown failed: %w", err)
 	}
@@ -140,5 +147,6 @@ func (s *server) RegisterRoutes() {
 // certExists determines if a certificate exists at a given path.
 func certExists(path string) bool {
 	_, err := os.Stat(path)
+
 	return err == nil
 }

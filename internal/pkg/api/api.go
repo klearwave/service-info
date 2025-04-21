@@ -16,23 +16,23 @@ const (
 )
 
 type Reader interface {
-	Read(*db.Database) *Result
+	Read(database *db.Database) *Result
 }
 
 type Lister interface {
-	List(*db.Database) *Result
+	List(database *db.Database) *Result
 }
 
-type Creater interface {
-	Create(*db.Database) *Result
+type Creator interface {
+	Create(database *db.Database) *Result
 }
 
 type Updater interface {
-	Update(*db.Database) *Result
+	Update(database *db.Database) *Result
 }
 
 type Deleter interface {
-	Delete(*db.Database) *Result
+	Delete(database *db.Database) *Result
 }
 
 func PathFor(path string) string {

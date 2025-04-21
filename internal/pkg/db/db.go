@@ -10,6 +10,9 @@ import (
 )
 
 const (
+	defaultWaitTimeoutSeconds         = 30
+	defaultWaitTimeoutIntervalSeconds = 2
+
 	MissingDatabaseID int = 0
 )
 
@@ -42,7 +45,7 @@ func (database *Database) Open() error {
 	database.Connection = db
 
 	// wait up to 30 seconds for the connection to open
-	err = database.Wait(30)
+	err = database.Wait(defaultWaitTimeoutSeconds)
 	if err != nil {
 		return err
 	}
@@ -62,7 +65,7 @@ func (database *Database) Close() error {
 
 // Read is a generic function to read a model
 // when no special logic is required.
-func (database *Database) Read(id int, model interface{}) error {
+func (database *Database) Read(id int, model any) error {
 	result := database.Connection.Find(model, id)
 	if result.Error != nil {
 		return result.Error
@@ -77,8 +80,8 @@ func (database *Database) Read(id int, model interface{}) error {
 
 // FindBy is a generic function to read a model by
 // which matches a field with a particular value.
-func (database *Database) FindBy(field string, value interface{}, model interface{}) (*gorm.DB, error) {
-	result := database.Connection.Where(map[string]interface{}{field: value}).First(model)
+func (database *Database) FindBy(field string, value, model any) (*gorm.DB, error) {
+	result := database.Connection.Where(map[string]any{field: value}).First(model)
 	if result.Error != nil {
 		if result.RowsAffected == 0 {
 			return result, nil
@@ -92,7 +95,7 @@ func (database *Database) FindBy(field string, value interface{}, model interfac
 
 // Delete is a generic function to delete a model
 // when no special logic is required.
-func (database *Database) Delete(id int, model interface{}) error {
+func (database *Database) Delete(id int, model any) error {
 	result := database.Connection.Delete(model, id)
 	if result.Error != nil {
 		return result.Error
@@ -108,7 +111,7 @@ func (database *Database) Wait(timeoutSeconds int64) error {
 		return fmt.Errorf("unable to create sql database connection; %w", err)
 	}
 
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(defaultWaitTimeoutIntervalSeconds * time.Second)
 	defer ticker.Stop()
 
 	timeoutChan := time.After(time.Duration(timeoutSeconds) * time.Second)

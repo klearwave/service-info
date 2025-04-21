@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -34,27 +34,27 @@ func (service *Service) Stop() error {
 }
 
 // Create handles the creation of a new resource in the database for a web service.
-func (service *Service) Create(ctx context.Context, req api.CreateRequest) *api.Result {
-	return runRequest(service.Database, req, req.ToCreater().Create)
+func (service *Service) Create(_ context.Context, req api.CreateRequest) *api.Result {
+	return runRequest(service.Database, req, req.ToCreator().Create)
 }
 
 // Read handles the reading of an existing resource in the database for a web service.
-func (service *Service) Read(ctx context.Context, req api.ReadRequest) *api.Result {
+func (service *Service) Read(_ context.Context, req api.ReadRequest) *api.Result {
 	return runRequest(service.Database, req, req.ToReader().Read)
 }
 
 // List handles the listing of existing resources in the database for a web service.
-func (service *Service) List(ctx context.Context, req api.ListRequest) *api.Result {
+func (service *Service) List(_ context.Context, req api.ListRequest) *api.Result {
 	return runRequest(service.Database, req, req.ToLister().List)
 }
 
 // Update handles the updating of an existing resource in the database for a web service.
-func (service *Service) Update(ctx context.Context, req api.UpdateRequest) *api.Result {
+func (service *Service) Update(_ context.Context, req api.UpdateRequest) *api.Result {
 	return runRequest(service.Database, req, req.ToUpdater().Update)
 }
 
 // Delete handles the deleting of an existing resource from the database for a web service.
-func (service *Service) Delete(ctx context.Context, req api.DeleteRequest) *api.Result {
+func (service *Service) Delete(_ context.Context, req api.DeleteRequest) *api.Result {
 	return runRequest(service.Database, req, req.ToDeleter().Delete)
 }
 
@@ -63,24 +63,24 @@ type runRequestFunc func(*db.Database) *api.Result
 // runRequest runs specific request logic.  It is used by top-level CRUD functions
 // with the same logic applied to all.
 func runRequest(database *db.Database, req api.Request, run runRequestFunc) *api.Result {
-	database.Lock.Lock()
-	defer database.Lock.Unlock()
-
 	// ensure we have a valid database connection
-	if database == nil {
+	if database == nil || database.Lock == nil {
 		result := &api.Result{}
 		result.InternalServerError(
 			"database connection is invalid",
-			fmt.Errorf("found a nil database connection"),
+			errors.New("found a nil database connection"),
 		)
 	}
+
+	database.Lock.Lock()
+	defer database.Lock.Unlock()
 
 	// ensure we have a valid request function
 	if run == nil {
 		result := &api.Result{}
 		result.InternalServerError(
 			"request function is invalid",
-			fmt.Errorf("found a nil request function"),
+			errors.New("found a nil request function"),
 		)
 	}
 

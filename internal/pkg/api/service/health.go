@@ -12,7 +12,7 @@ import (
 )
 
 // HealthZ defines the service for ensuring the service is healthy.
-func (service *Service) HealthZ(ctx context.Context, req *read.Health) (*response.Health, error) {
+func (service *Service) HealthZ(_ context.Context, _ *read.Health) (*response.Health, error) {
 	health := &response.Health{
 		Body: unversioned.Health{},
 	}

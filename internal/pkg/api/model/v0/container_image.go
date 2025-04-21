@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strconv"
 
 	"gorm.io/gorm"
 
@@ -20,22 +21,22 @@ const (
 
 // ContainerImageBase is the base set of fields for all ContainerImage objects.
 type ContainerImageBase struct {
-	Image      *string `json:"image,omitempty" example:"ghcr.io/klearwave/service-info:latest" doc:"Full container image including the registry, repository and tag."`
-	SHA256Sum  *string `json:"sha256sum,omitempty" example:"2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d" doc:"SHA256 sum of the container image."`
-	CommitHash *string `json:"commit_hash,omitempty" example:"631af50a8bbc4b5e69dab77d51a3a1733550fe8d" doc:"Commit hash related to the image."`
+	Image      *string `doc:"Full container image including the registry, repository and tag." example:"ghcr.io/klearwave/service-info:latest"                            json:"image,omitempty"`
+	SHA256Sum  *string `doc:"SHA256 sum of the container image."                               example:"2d4b92db6941294f731cfe7aeca336eb8dba279171c0e6ceda32b9f018f8429d" json:"sha256sum,omitempty"`
+	CommitHash *string `doc:"Commit hash related to the image."                                example:"631af50a8bbc4b5e69dab77d51a3a1733550fe8d"                         json:"commit_hash,omitempty"`
 }
 
 // ContainerImage represents the full database schema for a ContainerImage.  The full schema is also used in responses.
 type ContainerImage struct {
-	model.ModelWithId
+	model.WithID
 
 	ContainerImageBase
 
-	ImageRegistry *string `json:"image_registry,omitempty" gorm:"default:docker.io" example:"ghcr.io" doc:"Container image registry without the image name, tag or sha256sum information."`
-	ImageName     *string `json:"image_name,omitempty" example:"klearwave/service-info" doc:"Container image name without the registry, tag or sha256sum information."`
-	ImageTag      *string `json:"image_tag,omitempty" gorm:"default:latest" example:"v0.1.2" doc:"Container image tag without the registry, image name or sha256 information."`
+	ImageRegistry *string `doc:"Container image registry without the image name, tag or sha256sum information." example:"ghcr.io"                gorm:"default:docker.io"    json:"image_registry,omitempty"`
+	ImageName     *string `doc:"Container image name without the registry, tag or sha256sum information."       example:"klearwave/service-info" json:"image_name,omitempty"`
+	ImageTag      *string `doc:"Container image tag without the registry, image name or sha256 information."    example:"v0.1.2"                 gorm:"default:latest"       json:"image_tag,omitempty"`
 
-	Versions []*Version `json:"versions,omitempty" gorm:"many2many:version_container_images;" doc:"Versions associated with this container image."`
+	Versions []*Version `doc:"Versions associated with this container image." gorm:"many2many:version_container_images;" json:"versions,omitempty"`
 }
 
 // BeforeCreate defines the before create logic for a specific container image.  The BeforeCreate
@@ -57,7 +58,7 @@ func (containerImage *ContainerImage) BeforeCreate(tx *gorm.DB) error {
 		return fmt.Errorf("unable to lookup existing container image by name; %w", err)
 	}
 
-	containerImage.Id = existing.Id
+	containerImage.ID = existing.ID
 
 	equal, err := containerImage.EqualTo(existing)
 	if err != nil {
@@ -85,12 +86,12 @@ func (containerImage *ContainerImage) Read(database *db.Database) *api.Result {
 	}()
 
 	databaseResult := database.Connection.
-		Where(map[string]interface{}{"id": containerImage.Id}).
+		Where(map[string]any{"id": containerImage.ID}).
 		First(containerImage)
 
 	if databaseResult.Error != nil {
 		if errors.Is(databaseResult.Error, gorm.ErrRecordNotFound) {
-			apiResult.NotFoundError(nil, containerImage.Id, containerImage)
+			apiResult.NotFoundError(nil, containerImage.ID, containerImage)
 
 			return apiResult
 		}
@@ -100,8 +101,8 @@ func (containerImage *ContainerImage) Read(database *db.Database) *api.Result {
 		return apiResult
 	}
 
-	if containerImage.Id < 1 {
-		apiResult.NotFoundError(nil, containerImage.Id, containerImage)
+	if containerImage.ID < 1 {
+		apiResult.NotFoundError(nil, containerImage.ID, containerImage)
 
 		return apiResult
 	}
@@ -132,7 +133,7 @@ func (containerImages *ContainerImages) List(database *db.Database) *api.Result 
 
 // Delete handles the delete request for a container image model.
 func (containerImage *ContainerImage) Delete(database *db.Database) *api.Result {
-	id := fmt.Sprintf("%d", containerImage.Id)
+	id := strconv.Itoa(containerImage.ID)
 
 	return api.Delete(database, id, containerImage)
 }
@@ -164,6 +165,8 @@ func (containerImage *ContainerImage) EqualTo(compared *ContainerImage) (bool, e
 
 // Parse sets specific container image metadata such as the image path and the
 // image tag.
+//
+//nolint:cyclop // TODO: refactor
 func (containerImage *ContainerImage) Parse() error {
 	if containerImage == nil {
 		return apierrors.ErrMissingContainerImageObject
@@ -193,14 +196,12 @@ func (containerImage *ContainerImage) Parse() error {
 	} else {
 		if *containerImage.SHA256Sum == "" {
 			containerImage.SHA256Sum = pointers.FromString(matches[5])
-		} else {
-			if matches[5] != "" && matches[5] != *containerImage.SHA256Sum {
-				return fmt.Errorf("found sha256sum value [%s] but parsed [%s]; %w",
-					*containerImage.SHA256Sum,
-					matches[5],
-					apierrors.ErrMismatchParameter,
-				)
-			}
+		} else if matches[5] != "" && matches[5] != *containerImage.SHA256Sum {
+			return fmt.Errorf("found sha256sum value [%s] but parsed [%s]; %w",
+				*containerImage.SHA256Sum,
+				matches[5],
+				apierrors.ErrMismatchParameter,
+			)
 		}
 	}
 

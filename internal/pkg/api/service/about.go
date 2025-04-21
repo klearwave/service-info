@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
 
@@ -24,6 +25,6 @@ func (service *Service) GetAbout(ctx context.Context, req *read.About) (*respons
 
 	return &response.About{
 		Body:   *model,
-		Status: 200,
+		Status: http.StatusOK,
 	}, nil
 }

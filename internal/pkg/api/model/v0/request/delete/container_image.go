@@ -14,7 +14,7 @@ type ContainerImageRequest struct {
 
 // IsAuthorized checks if the request is authorized.  It is used to satisfy the Request.
 func (req ContainerImageRequest) IsAuthorized() (bool, error) {
-	return req.Authorization.Authorized()
+	return req.Authorized()
 }
 
 // IsValid checks if the request is valid.  It is used to satisfy the Reader interface.
@@ -26,8 +26,8 @@ func (req ContainerImageRequest) IsValid() (bool, error) {
 // Deleter interface.
 func (req ContainerImageRequest) ToDeleter() api.Deleter {
 	return &v0.ContainerImage{
-		ModelWithId: model.ModelWithId{
-			Id: req.Id,
+		WithID: model.WithID{
+			ID: req.ID,
 		},
 	}
 }

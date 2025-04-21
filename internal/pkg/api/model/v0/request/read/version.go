@@ -26,7 +26,7 @@ func (req VersionRequest) IsValid() (bool, error) {
 func (req VersionRequest) ToReader() api.Reader {
 	return &v0.Version{
 		VersionBase: v0.VersionBase{
-			Id: &req.Id,
+			ID: &req.ID,
 		},
 	}
 }

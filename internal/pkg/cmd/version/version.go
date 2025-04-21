@@ -25,7 +25,7 @@ func NewCommand() *cobra.Command {
 	return command
 }
 
-//nolint:forbidigo
+//nolint:forbidigo // this is just printing out information, so we have no issues here
 func run() {
 	fmt.Printf("%s\n", api.ServerVersion)
 }

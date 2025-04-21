@@ -2,6 +2,7 @@ package health
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -46,7 +47,6 @@ func NewCommand() *cobra.Command {
 	return command
 }
 
-//nolint:forbidigo
 func health(commandInput *input) error {
 	prefix := "http"
 	if commandInput.TLS {
@@ -67,18 +67,20 @@ func health(commandInput *input) error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, path, bytes.NewBuffer(body))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, path, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	var client *http.Client
 
+	//nolint:gosec // need ability to call with insecure for development purposes
 	if commandInput.Insecure && commandInput.TLS {
 		client = &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: commandInput.Insecure},
 			},
 		}
 	} else {

@@ -25,8 +25,8 @@ func (req ContainerImageRequest) IsValid() (bool, error) {
 // Reader interface.
 func (req ContainerImageRequest) ToReader() api.Reader {
 	return &v0.ContainerImage{
-		ModelWithId: model.ModelWithId{
-			Id: req.Id,
+		WithID: model.WithID{
+			ID: req.ID,
 		},
 	}
 }

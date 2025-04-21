@@ -38,17 +38,17 @@ func NewCommand() *cobra.Command {
 	return command
 }
 
-//nolint:forbidigo
 func generate(commandInput *input) error {
 	gin.SetMode(gin.ReleaseMode)
 
-	server, err := server.NewServer()
+	srv, err := server.NewServer()
 	if err != nil {
 		return err
 	}
-	server.RegisterRoutes()
 
-	spec, err := server.API.OpenAPI().YAML()
+	srv.RegisterRoutes()
+
+	spec, err := srv.API.OpenAPI().YAML()
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func generate(commandInput *input) error {
 	}
 	defer outFile.Close()
 
-	_, err = outFile.Write([]byte(spec))
+	_, err = outFile.Write(spec)
 	if err != nil {
 		return err
 	}

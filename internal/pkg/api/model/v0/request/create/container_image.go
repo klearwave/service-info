@@ -23,7 +23,7 @@ type ContainerImageRequest struct {
 // IsAuthorized checks if the user is authorized to create a version.  It is used to satisfy the
 // Request interface.
 func (req *ContainerImageRequest) IsAuthorized() (bool, error) {
-	return req.Authorization.Authorized()
+	return req.Authorized()
 }
 
 // IsValid checks if the request is valid for a version.  It is used to satisfy the
@@ -62,9 +62,9 @@ func (req *ContainerImageRequest) IsValid() (bool, error) {
 	return true, nil
 }
 
-// ToCreater converts the request to a creater object.  It is used to satisfy the
-// Creater interface.
-func (req ContainerImageRequest) ToCreater() api.Creater {
+// ToCreator converts the request to a creator object.  It is used to satisfy the
+// Creator interface.
+func (req *ContainerImageRequest) ToCreator() api.Creator {
 	return req.Body.ToObject()
 }
 

@@ -1,0 +1,214 @@
+---
+version: "2"
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/klearwave/service-info)
+    gofmt:
+      rewrite-rules:
+        - pattern: 'interface{}'
+          replacement: 'any'
+        - pattern: 'a[b:len(a)]'
+          replacement: 'a[b:]'
+    goimports:
+      local-prefixes:
+        - github.com/klearwave/service-info
+
+linters:
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - cyclop
+    - decorder
+    - dogsled
+    - dupword
+    - durationcheck
+    - errcheck
+    - errchkjson
+    - errname
+    - exhaustive
+    - exptostd
+    - fatcontext
+    - forbidigo
+    - forcetypeassert
+    - funcorder
+    - funlen
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - godox
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosmopolitan
+    - govet
+    - grouper
+    - iface
+    - importas
+    - inamedparam
+    - ineffassign
+    - interfacebloat
+    - intrange
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
+    - misspell
+    - mnd
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnesserr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - recvcheck
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - tagalign
+    - tagliatelle
+    - testableexamples
+    - testifylint
+    - testpackage
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
+    - wsl
+    - zerologlint
+
+    # ISSUES: the following have global issues and are disabled.
+    # - exhaustruct:      too restrictive on how to define structures
+    # - godox:            allow TODOs in code
+    # - revive:           allow const type = value format for defining constants and variables
+    # - gochecknoglobals: we need globals to modify variables at compile time
+    # - wrapcheck:        errors will not be exposed externally
+    # - goerr113:         errors will not be exposed externally
+    # - depguard:         do not want to implement an allow list for packages
+    # - dupl:             framework will require duplicate code
+    # - varnamelen:       handle with code reviews; will get too chatty constantly nolinting this
+    # - thelper:          do not like the t.Helper convention
+    # - ireturn:          do not check for interface returns (sometimes needed to satisfy interfaces)
+    # - lll:              too many tagged structs to worry about long lines
+    # - errorlint:        how much error linting do we really need?
+
+  #
+  # specific settings
+  #
+  settings:
+    funlen:
+      lines: 100
+      statements: 50
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+      disabled-checks:
+        - regexpMust
+    gocyclo:
+      min-complexity: 15
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+    nolintlint:
+      allow-no-explanation: []
+      allow-unused: false
+      require-explanation: false
+      require-specific: false
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+    predeclared:
+      ignore:
+        - delete
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: unexported-return
+          disabled: true
+        - name: line-length-limit
+          disabled: true
+        - name: cyclomatic
+          disabled: true
+        - name: function-length
+          disabled: true
+        - name: cognitive-complexity
+          disabled: true
+        - name: max-public-structs
+          disabled: true
+        - name: add-constant
+          disabled: true
+        - name: redundant-import-alias
+          disabled: true
+        - name: unused-receiver
+          disabled: true
+        - name: unchecked-type-assertion
+          disabled: true
+
+  #
+  # specific exclusions
+  #
+  exclusions:
+    warn-unused: true
+    presets:
+      - comments
+      - std-error-handling
+      - common-false-positives
+      - legacy
+    rules:
+      - path: test/e2e/e2e_test.go
+        linters:
+          - cyclop
+          - gocognit
+          - gocyclo

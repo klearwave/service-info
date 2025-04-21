@@ -17,7 +17,7 @@ const (
 type VersionBody struct {
 	v0.VersionBase
 
-	ContainerImages []*ContainerImageBody `json:"container_images,omitempty" gorm:"many2many:version_container_images;" doc:"Container images associated with this version."`
+	ContainerImages []*ContainerImageBody `doc:"Container images associated with this version." gorm:"many2many:version_container_images;" json:"container_images,omitempty"`
 }
 
 // VersionRequest represents the request when creating a new version.
@@ -29,7 +29,7 @@ type VersionRequest struct {
 // IsAuthorized checks if the user is authorized to create a version.  It is used to satisfy the
 // Request interface.
 func (req *VersionRequest) IsAuthorized() (bool, error) {
-	return req.Authorization.Authorized()
+	return req.Authorized()
 }
 
 // IsValid checks if the request is valid for a version.  It is used to satisfy the
@@ -39,8 +39,8 @@ func (req *VersionRequest) IsValid() (bool, error) {
 		return false, apierrors.ErrMissingVersionObject
 	}
 
-	if req.Body.Id == nil {
-		return false, apierrors.ErrMissingVersionParameterVersionId
+	if req.Body.ID == nil {
+		return false, apierrors.ErrMissingVersionParameterVersionID
 	}
 
 	re, err := regexp.Compile(versionRegex)
@@ -48,9 +48,9 @@ func (req *VersionRequest) IsValid() (bool, error) {
 		return false, fmt.Errorf("invalid regex pattern [%s]: %w", versionRegex, err)
 	}
 
-	if !re.MatchString(*req.Body.Id) {
+	if !re.MatchString(*req.Body.ID) {
 		return false, fmt.Errorf("input [%s] does not match the required pattern [%s]",
-			*req.Body.Id,
+			*req.Body.ID,
 			versionRegex,
 		)
 	}
@@ -58,12 +58,12 @@ func (req *VersionRequest) IsValid() (bool, error) {
 	return true, nil
 }
 
-// ToCreater converts the request to a creater object.  It is used to satisfy the
-// Creater interface.
-func (req VersionRequest) ToCreater() api.Creater {
+// ToCreator converts the request to a creator object.  It is used to satisfy the
+// Creator interface.
+func (req *VersionRequest) ToCreator() api.Creator {
 	version := &v0.Version{
 		VersionBase: v0.VersionBase{
-			Id: req.Body.Id,
+			ID: req.Body.ID,
 		},
 	}
 

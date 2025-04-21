@@ -15,7 +15,7 @@ var (
 )
 
 const (
-	defaultDatabasePort = 5432
+	DefaultDatabasePort = 5432
 
 	envDatabaseHost     = "DB_HOST"
 	envDatabasePort     = "DB_PORT"
@@ -37,6 +37,8 @@ type Config struct {
 
 // Parse parses a connection object into a database string.  It uses environment variables
 // if it cannot find parameters on the object.
+//
+//nolint:cyclop // TODO: make this simpler
 func (connection *Config) Parse() error {
 	if connection.Port == 0 {
 		if os.Getenv(envDatabasePort) != "" {
@@ -47,40 +49,40 @@ func (connection *Config) Parse() error {
 
 			connection.Port = port
 		} else {
-			connection.Port = defaultDatabasePort
+			connection.Port = DefaultDatabasePort
 		}
 	}
 
 	if connection.Host == "" {
-		if os.Getenv(envDatabaseHost) != "" {
-			connection.Host = os.Getenv(envDatabaseHost)
-		} else {
+		if os.Getenv(envDatabaseHost) == "" {
 			return ErrMissingDatabaseHost
 		}
+
+		connection.Host = os.Getenv(envDatabaseHost)
 	}
 
 	if connection.DatabaseName == "" {
-		if os.Getenv(envDatabaseName) != "" {
-			connection.DatabaseName = os.Getenv(envDatabaseName)
-		} else {
+		if os.Getenv(envDatabaseName) == "" {
 			return ErrMissingDatabaseName
 		}
+
+		connection.DatabaseName = os.Getenv(envDatabaseName)
 	}
 
 	if connection.Username == "" {
-		if os.Getenv(envDatabaseUsername) != "" {
-			connection.Username = os.Getenv(envDatabaseUsername)
-		} else {
+		if os.Getenv(envDatabaseUsername) == "" {
 			return ErrMissingDatabaseUsername
 		}
+
+		connection.Username = os.Getenv(envDatabaseUsername)
 	}
 
 	if connection.Password == "" {
-		if os.Getenv(envDatabasePassword) != "" {
-			connection.Password = os.Getenv(envDatabasePassword)
-		} else {
+		if os.Getenv(envDatabasePassword) == "" {
 			return ErrMissingDatabasePassword
 		}
+
+		connection.Password = os.Getenv(envDatabasePassword)
 	}
 
 	connection.String = fmt.Sprintf(

@@ -46,7 +46,7 @@ func (service *Service) ListContainerImagesV0(ctx context.Context, req *listv0.C
 }
 
 // ListContainerImageVersionsV0 defines the service for listing all versions which have a specific container image.
-func (service *Service) ListContainerImageVersionsV0(ctx context.Context, req *readv0.ContainerImageRequest) (*responsev0.Version, error) {
+func (service *Service) ListContainerImageVersionsV0(_ context.Context, req *readv0.ContainerImageRequest) (*responsev0.Version, error) {
 	service.Database.Lock.Lock()
 	defer service.Database.Lock.Unlock()
 
@@ -92,7 +92,7 @@ func getContainerImageV0ResponseFromResult(res *api.Result) (*responsev0.Contain
 		Body: responsev0.ContainerImageResponseBody{
 			Items: []v0.ContainerImage{*model},
 		},
-		Status: 200,
+		Status: http.StatusOK,
 	}, nil
 }
 
@@ -107,6 +107,6 @@ func getContainerImagesV0ResponseFromResult(res *api.Result) (*responsev0.Contai
 		Body: responsev0.ContainerImageResponseBody{
 			Items: *model,
 		},
-		Status: 200,
+		Status: http.StatusOK,
 	}, nil
 }
