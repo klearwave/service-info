@@ -6,7 +6,7 @@ formatters:
     - gofmt
     - gofumpt
     - goimports
-    - golines
+    # - golines
   settings:
     gci:
       sections:

@@ -33,6 +33,16 @@ build:
 	go build -o bin/service ./internal/pkg/cmd
 
 #
+# conformance and quick checks
+#
+lint:
+	golangci-lint run \
+		--config .golangci.yaml
+
+test-commit:
+	scripts/commit-check-latest.sh
+
+#
 # testing
 #
 up:
@@ -43,10 +53,6 @@ up-daemon:
 
 down:
 	docker compose down
-
-lint:
-	golangci-lint run \
-		--config .golangci.yaml
 
 test-unit:
 	go test ./internal/pkg/...

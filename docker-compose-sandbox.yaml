@@ -15,7 +15,11 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${DB_USERNAME}"]
+      test:
+        - "CMD"
+        - "pg_isready"
+        - "-U"
+        - "${DB_USERNAME}"
       interval: 5s
       retries: 5
       start_period: 10s
@@ -80,6 +84,7 @@ services:
         - "/bin/service"
         - "health"
         - "--port=8443"
+        - "--insecure"
 configs:
   tls_crt:
     file: /volume1/docker/projects/klearwave-service-info/tls.crt

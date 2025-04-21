@@ -61,7 +61,6 @@ func (service *Service) ListVersionContainerImagesV0(_ context.Context, req *rea
 		Model(req.ToReader()).
 		Association("ContainerImages").
 		Find(&apiResponse.Body.Items)
-
 	if err != nil {
 		apiResponse.Status = http.StatusInternalServerError
 
