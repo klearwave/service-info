@@ -14,3 +14,9 @@ terraform.tfstate.backup
 openapi.yaml
 
 bin/
+
+# ignore specific generated client code
+client/api/
+client/.gitignore
+client/.travis.yml
+client/git_push.sh

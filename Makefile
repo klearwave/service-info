@@ -1,3 +1,6 @@
+#
+# build
+#
 IMAGE ?= ghcr.io/klearwave/service-info
 IMAGE_VERSION ?= unstable
 image:
@@ -21,16 +24,23 @@ image-scan:
 		--exit-code 1 \
 		--no-progress $(IMAGE):$(IMAGE_VERSION) || true
 
-.PHONY: client
-client:
-	docker run --rm -v \
-		`pwd`:/local openapitools/openapi-generator-cli \
-			generate -i /local/openapi.yaml \
-			-g go \
-			-o /local/client
-
 build:
 	go build -o bin/service ./internal/pkg/cmd
+
+.PHONY: client
+client: build
+	if [ -d client ]; then rm -rf client; fi
+	bin/service generate
+	docker run --rm -v \
+		`pwd`:/local openapitools/openapi-generator-cli:v7.12.0 \
+		generate -i /local/openapi.yaml \
+		-g go \
+		--git-host github.com \
+		--git-user-id klearwave \
+		--git-repo-id service-info/client \
+		--package-name client \
+		-o /local/client
+	cd client && go mod tidy
 
 #
 # conformance and quick checks
