@@ -1,5 +1,5 @@
 ---
-name: Check
+name: Generate Client Code
 on:
   push:
     branches:
@@ -18,12 +18,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.23"
-
-      - name: Build CLI
-        run: make build
-
-      - name: Generate OpenAPI Spec
-        run: bin/service generate
 
       - name: Generate Client Code
         run: make client

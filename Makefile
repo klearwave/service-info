@@ -38,7 +38,9 @@ client: build
 	if [ -d client ]; then rm -rf client; fi
 	bin/service generate
 	docker run --rm \
-		-v `pwd`:/local openapitools/openapi-generator-cli:v7.12.0 \
+		-u `id -u`:`id -g` \
+		-v `pwd`:/local \
+		openapitools/openapi-generator-cli:v7.12.0 \
 		generate \
 			--input-spec /local/openapi.yaml \
 			--generator-name go \
