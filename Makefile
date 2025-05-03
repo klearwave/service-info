@@ -27,19 +27,27 @@ image-scan:
 build:
 	go build -o bin/service ./internal/pkg/cmd
 
+client-templates:
+	mkdir -p hack/templates
+	docker run --rm \
+		-v `pwd`/hack/templates:/local openapitools/openapi-generator-cli:v7.12.0 \
+		author template -g go -o /local
+
 .PHONY: client
 client: build
 	if [ -d client ]; then rm -rf client; fi
 	bin/service generate
-	docker run --rm -v \
-		`pwd`:/local openapitools/openapi-generator-cli:v7.12.0 \
-		generate -i /local/openapi.yaml \
-		-g go \
-		--git-host github.com \
-		--git-user-id klearwave \
-		--git-repo-id service-info/client \
-		--package-name client \
-		-o /local/client
+	docker run --rm \
+		-v `pwd`:/local openapitools/openapi-generator-cli:v7.12.0 \
+		generate \
+			--input-spec /local/openapi.yaml \
+			--generator-name go \
+			--git-host github.com \
+			--git-user-id klearwave \
+			--git-repo-id service-info/client \
+			--package-name client \
+			--template-dir /local/hack/templates \
+			--output /local/client
 	cd client && go mod tidy
 
 #
@@ -50,7 +58,7 @@ lint:
 		--config .golangci.yaml
 
 test-commit:
-	scripts/commit-check-latest.sh
+	hack/scripts/commit-check-latest.sh
 
 #
 # testing

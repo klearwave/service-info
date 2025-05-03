@@ -9,12 +9,11 @@ builds:
       - "CGO_ENABLED=0"
     goos:
       - "linux"
-      - "windows"
       - "darwin"
-    main: "./pkg/cmd"
-    binary: "service"
+    main: "./internal/pkg/cmd"
+    binary: "bin/service"
     ldflags:
-      - "-s -w -X github.com/klearwave/service-info/internal/pkg/models.AuthPassword={{ .Env.GITHUB_TOKEN }} -extldflags '-static'"
+      - "-s -w -X github.com/klearwave/service-info/internal/pkg/api.AuthPassword={{ .Env.GITHUB_TOKEN }} -extldflags '-static'"
 
 archives:
   - name_template: >-

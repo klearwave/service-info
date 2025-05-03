@@ -1,6 +1,8 @@
 module github.com/klearwave/service-info/client
 
-go 1.18
+go 1.23.0
+
+toolchain go1.23.7
 
 require github.com/stretchr/testify v1.10.0
 
